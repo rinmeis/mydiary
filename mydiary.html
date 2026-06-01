@@ -100,7 +100,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .week-day-col.sat .wdow,.week-day-col.sat .wdnum{color:var(--blue)}
 .week-day-col.today.sun .wdnum,.week-day-col.today.sat .wdnum{background:var(--text);color:#fff}
 .time-grid{flex:1;overflow-y:auto;position:relative;margin:0 16px}
-.time-row{display:grid;grid-template-columns:40px repeat(7,1fr);min-height:44px;border-bottom:0.5px solid var(--border)}
+.week-time-row{display:grid;grid-template-columns:40px repeat(7,1fr);min-height:44px;border-bottom:0.5px solid var(--border)}
 .time-label{font-size:10px;color:var(--text3);padding:3px 6px 0 0;text-align:right;line-height:1}
 .time-cell{border-left:0.5px solid var(--border);position:relative;cursor:pointer}
 .time-cell:active{background:var(--bg2)}
@@ -129,7 +129,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* ══ EVENT MODAL ══ */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:430px;box-sizing:border-box;transform:translateY(20px);transition:transform .2s;max-height:92vh;overflow-y:auto;overflow-x:hidden}
+.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:430px;box-sizing:border-box;transform:translateY(20px);transition:transform .2s;max-height:92vh;overflow:hidden}
+.modal-sheet-inner{padding:20px 16px 36px;overflow-y:auto;overflow-x:hidden;max-height:92vh}
 .modal-overlay.open .modal-sheet{transform:translateY(0)}
 .modal-title{font-size:16px;font-weight:500;margin-bottom:16px}
 .form-row{margin-bottom:12px}
@@ -138,11 +139,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .form-input:focus{border-color:var(--text)}
 .form-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;box-sizing:border-box}
 .form-select:focus{border-color:var(--text)}
-.time-row{display:flex;align-items:center;gap:8px}
+.evt-time-row{display:flex;align-items:flex-end;gap:6px}
 .time-field{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 .time-field-label{font-size:11px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:3px}
 .time-field-label i{font-size:12px}
-.time-sep{font-size:14px;color:var(--text3);padding-top:22px;flex-shrink:0}
+.time-sep{font-size:14px;color:var(--text3);padding-bottom:10px;flex-shrink:0}
+.time-field .form-input{padding:9px 6px;font-size:13px}
 .color-row{display:flex;gap:8px;flex-wrap:wrap}
 .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
 .color-swatch.selected{border-color:var(--text);transform:scale(1.15)}
@@ -345,64 +347,66 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 <!-- ══ ADD/EDIT EVENT MODAL ══ -->
 <div class="modal-overlay" id="event-modal">
   <div class="modal-sheet">
-    <div class="modal-title" id="modal-title-text">予定を追加</div>
-    <div class="form-row">
-      <label class="form-label">タイトル</label>
-      <input class="form-input" type="text" id="evt-title" placeholder="予定のタイトル">
-    </div>
-    <div class="form-row">
-      <label class="form-label">日付</label>
-      <input class="form-input" type="date" id="evt-date">
-    </div>
-    <div class="form-row">
-      <label class="form-label">時間（任意）</label>
-      <div class="time-row">
-        <div class="time-field">
-          <span class="time-field-label"><i class="ti ti-clock"></i>開始時刻</span>
-          <input class="form-input" type="time" id="evt-start">
-        </div>
-        <div class="time-sep">〜</div>
-        <div class="time-field">
-          <span class="time-field-label"><i class="ti ti-clock-off"></i>終了時刻</span>
-          <input class="form-input" type="time" id="evt-end">
+    <div class="modal-sheet-inner">
+      <div class="modal-title" id="modal-title-text">予定を追加</div>
+      <div class="form-row">
+        <label class="form-label">タイトル</label>
+        <input class="form-input" type="text" id="evt-title" placeholder="予定のタイトル">
+      </div>
+      <div class="form-row">
+        <label class="form-label">日付</label>
+        <input class="form-input" type="date" id="evt-date">
+      </div>
+      <div class="form-row">
+        <label class="form-label">時間（任意）</label>
+        <div class="evt-time-row">
+          <div class="time-field">
+            <span class="time-field-label"><i class="ti ti-clock"></i>開始時刻</span>
+            <input class="form-input" type="time" id="evt-start">
+          </div>
+          <div class="time-sep">〜</div>
+          <div class="time-field">
+            <span class="time-field-label"><i class="ti ti-clock-off"></i>終了時刻</span>
+            <input class="form-input" type="time" id="evt-end">
+          </div>
         </div>
       </div>
+      <div class="form-row">
+        <label class="form-label">繰り返し</label>
+        <select class="form-select" id="evt-recur" onchange="onRecurChange()">
+          <option value="none">なし</option>
+          <option value="daily">毎日</option>
+          <option value="weekly">毎週</option>
+          <option value="monthly">毎月</option>
+          <option value="yearly">毎年</option>
+        </select>
+      </div>
+      <div class="form-row" id="recur-end-row" style="display:none">
+        <label class="form-label">繰り返し終了日（任意）</label>
+        <input class="form-input" type="date" id="evt-recur-end">
+      </div>
+      <div class="form-row">
+        <label class="form-label">リマインダー</label>
+        <select class="form-select" id="evt-reminder">
+          <option value="none">なし</option>
+          <option value="0">時刻通り</option>
+          <option value="5">5分前</option>
+          <option value="10">10分前</option>
+          <option value="30">30分前</option>
+          <option value="60">1時間前</option>
+          <option value="1440">1日前</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">メモ（任意）</label>
+        <textarea class="form-input diary-textarea" id="evt-note" rows="2" placeholder="詳細メモ"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">カラー</label>
+        <div class="color-row" id="color-swatches"></div>
+      </div>
+      <div class="modal-actions" id="modal-actions"></div>
     </div>
-    <div class="form-row">
-      <label class="form-label">繰り返し</label>
-      <select class="form-select" id="evt-recur" onchange="onRecurChange()">
-        <option value="none">なし</option>
-        <option value="daily">毎日</option>
-        <option value="weekly">毎週</option>
-        <option value="monthly">毎月</option>
-        <option value="yearly">毎年</option>
-      </select>
-    </div>
-    <div class="form-row" id="recur-end-row" style="display:none">
-      <label class="form-label">繰り返し終了日（任意）</label>
-      <input class="form-input" type="date" id="evt-recur-end">
-    </div>
-    <div class="form-row">
-      <label class="form-label">リマインダー</label>
-      <select class="form-select" id="evt-reminder">
-        <option value="none">なし</option>
-        <option value="0">時刻通り</option>
-        <option value="5">5分前</option>
-        <option value="10">10分前</option>
-        <option value="30">30分前</option>
-        <option value="60">1時間前</option>
-        <option value="1440">1日前</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <label class="form-label">メモ（任意）</label>
-      <textarea class="form-input diary-textarea" id="evt-note" rows="2" placeholder="詳細メモ"></textarea>
-    </div>
-    <div class="form-row">
-      <label class="form-label">カラー</label>
-      <div class="color-row" id="color-swatches"></div>
-    </div>
-    <div class="modal-actions" id="modal-actions"></div>
   </div>
 </div>
 
@@ -767,7 +771,7 @@ function renderWeek() {
   const CELL_H = 44;
   let gridH = '';
   for (let hr = 0; hr < 24; hr++) {
-    gridH += `<div class="time-row">
+    gridH += `<div class="week-time-row">
       <div class="time-label">${String(hr).padStart(2,'0')}:00</div>`;
     for (let i = 0; i < 7; i++) {
       const d = addDays(ws, i);
@@ -789,7 +793,7 @@ function renderWeek() {
       const topPx = (sh + sm/60) * CELL_H;
       const duration = Math.max(0.5, (eh + em/60) - (sh + sm/60));
       const heightPx = duration * CELL_H;
-      const rowEls = grid.querySelectorAll('.time-row');
+      const rowEls = grid.querySelectorAll('.week-time-row');
       const rowEl = rowEls[sh];
       if (!rowEl) return;
       const cellEl = rowEl.querySelectorAll('.time-cell')[i];
@@ -814,7 +818,7 @@ function renderWeek() {
     const nowH = now.getHours(), nowM = now.getMinutes();
     const todayDow = TODAY.getDay();
     const colIdx = todayDow === 0 ? 6 : todayDow - 1;
-    const rowEls = grid.querySelectorAll('.time-row');
+    const rowEls = grid.querySelectorAll('.week-time-row');
     const rowEl = rowEls[nowH];
     if (rowEl) {
       const cellEl = rowEl.querySelectorAll('.time-cell')[colIdx];
