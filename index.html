@@ -83,8 +83,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* date jump */
 .date-jump-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s}
 .date-jump-overlay.open{opacity:1;pointer-events:all}
-.date-jump-pop{background:var(--bg);border-radius:18px;width:300px;max-width:92vw;box-sizing:border-box;overflow:hidden;transform:scale(.95);transition:transform .15s}
-.date-jump-inner{padding:22px 18px 18px}
+.date-jump-pop{background:var(--bg);border-radius:18px;width:min(300px,calc(100vw - 48px));box-sizing:border-box;overflow:hidden;transform:scale(.95);transition:transform .15s}
+.date-jump-inner{padding:22px 18px 18px;box-sizing:border-box}
+.date-jump-inner .form-input{width:100%;box-sizing:border-box;max-width:100%}
 .date-jump-overlay.open .date-jump-pop{transform:scale(1)}
 .date-jump-pop h3{font-size:15px;font-weight:500;margin-bottom:14px}
 .date-jump-pop .form-input{margin-bottom:12px}
@@ -434,7 +435,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.0.1';
+const VERSION = 'ver.1.0.4';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
