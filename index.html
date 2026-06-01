@@ -58,8 +58,20 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .cal-dow{font-size:11px;color:var(--text2);padding:3px 0;font-weight:500}
 .cal-dow:first-child{color:var(--red)}
 .cal-dow:last-child{color:var(--blue)}
-.cal-body-month{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-cell{min-height:58px;border-radius:6px;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden}
+.cal-body-month{display:grid;grid-template-columns:repeat(7,1fr);border-left:0.5px solid var(--border);border-top:0.5px solid var(--border)}
+.cal-cell{min-height:58px;border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+/* today panel */
+.today-panel{padding:12px 16px 16px;border-top:1px solid var(--border)}
+.today-panel-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase}
+.today-evt-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.today-evt-item:last-child{border-bottom:none}
+.today-evt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.today-evt-info{flex:1;min-width:0}
+.today-evt-title{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.today-evt-time{font-size:11px;color:var(--text2);margin-top:1px}
+.today-empty{text-align:center;color:var(--text3);font-size:13px;padding:10px 0}
+/* version */
+.header-ver{font-size:10px;color:var(--text3);display:block;text-align:right;margin-top:1px}
 .cal-cell:active{background:var(--bg2)}
 .cal-cell .dnum{font-size:12px;text-align:center;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin:0 auto 2px}
 .cal-cell.today .dnum{background:var(--text);color:#fff}
@@ -218,7 +230,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
   <!-- Header -->
   <div class="header">
     <h1 id="header-title">カレンダー</h1>
-    <span class="header-date" id="header-date"></span>
+    <div style="text-align:right">
+      <span class="header-date" id="header-date"></span>
+      <span class="header-ver" id="header-ver"></span>
+    </div>
   </div>
 
   <!-- Notification permission banner -->
@@ -254,12 +269,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
       </div>
 
       <!-- Monthly view -->
-      <div id="view-month">
-        <div class="cal-head">
+      <div id="view-month" style="display:flex;flex-direction:column;flex:1;overflow-y:auto">
+        <div class="cal-head" style="padding:0 16px">
           <div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div>
           <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div>
         </div>
-        <div class="cal-body-month" id="cal-body-month"></div>
+        <div class="cal-body-month" id="cal-body-month" style="margin:0 16px"></div>
+        <div class="today-panel" id="today-panel"></div>
       </div>
 
       <!-- Weekly view -->
@@ -411,6 +427,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
+const VERSION = 'ver.1.0.1';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -678,6 +695,29 @@ function renderMonth() {
     h += monthCell(i, k, true);
   }
   document.getElementById('cal-body-month').innerHTML = h;
+  renderTodayPanel();
+}
+
+function renderTodayPanel() {
+  const todayStr = fmt(TODAY);
+  const todayEvts = eventsOn(todayStr);
+  const panel = document.getElementById('today-panel');
+  if (!panel) return;
+  if (!todayEvts.length) {
+    panel.innerHTML = `<div class="today-panel-title">本日の予定</div><div class="today-empty">本日の予定はありません</div>`;
+    return;
+  }
+  const items = todayEvts.map(e => {
+    const timeStr = e.start ? e.start + (e.end ? ' 〜 ' + e.end : '') : '終日';
+    return `<div class="today-evt-item" onclick="onMonthDayClick('${todayStr}')">
+      <div class="today-evt-dot" style="background:${e.color}"></div>
+      <div class="today-evt-info">
+        <div class="today-evt-title">${escHtml(e.title)}</div>
+        <div class="today-evt-time">${timeStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+  panel.innerHTML = `<div class="today-panel-title">本日の予定 (${todayEvts.length}件)</div>${items}`;
 }
 
 function monthCell(d, k, other, extra='') {
@@ -830,6 +870,8 @@ function renderDay() {
   }
   document.getElementById('time-grid-day').innerHTML = html;
 
+  const colMap = computeColumns(dayEvts);
+
   dayEvts.forEach(evt => {
     if (!evt.start) {
       const slot = document.getElementById('dslot-0');
@@ -850,7 +892,12 @@ function renderDay() {
     const pill = document.createElement('div');
     pill.className = 'day-evt';
     const heightPx = duration * CELL_H - 4;
-    pill.style.cssText = `background:${evt.color};top:${sm/60*CELL_H+2}px;height:${heightPx}px;overflow:visible;`;
+    const info = colMap.get(evt.id) || { col: 0, overlap: false };
+    let leftCss, rightCss;
+    if (!info.overlap) { leftCss = '4px'; rightCss = '4px'; }
+    else if (info.col === 0) { leftCss = '4px'; rightCss = 'calc(50% + 2px)'; }
+    else { leftCss = 'calc(50% + 2px)'; rightCss = '4px'; }
+    pill.style.cssText = `background:${evt.color};top:${sm/60*CELL_H+2}px;height:${heightPx}px;left:${leftCss};right:${rightCss};overflow:visible;`;
     pill.innerHTML = `<strong>${evt.start}${evt.end?' 〜 '+evt.end:''}</strong><br>${evt.title}`;
     pill.onclick = (e) => { e.stopPropagation(); showDetail(evt.id, dStr); };
     slot.style.position = 'relative';
@@ -877,6 +924,51 @@ function renderDay() {
       grid.scrollTop = Math.max(0, nowH * CELL_H - 80);
     }, 50);
   }
+}
+
+/* ══════════════════════════
+   COLUMN OVERLAP DETECTION
+══════════════════════════ */
+function toMin(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+function overlapsTime(s1,e1,s2,e2) { return s1 < e2 && e1 > s2; }
+
+function computeColumns(evts) {
+  const timed = evts.filter(e => e.start)
+    .sort((a,b) => a.start.localeCompare(b.start));
+  const result = new Map();
+
+  for (let i = 0; i < timed.length; i++) {
+    const a = timed[i];
+    const aS = toMin(a.start);
+    const aE = Math.max(aS + 30, a.end ? toMin(a.end) : aS + 30);
+    let col = 0;
+    for (let j = 0; j < i; j++) {
+      const b = timed[j];
+      const bS = toMin(b.start);
+      const bE = Math.max(bS + 30, b.end ? toMin(b.end) : bS + 30);
+      if ((result.get(b.id)||{col:0}).col === 0 && overlapsTime(aS,aE,bS,bE)) {
+        col = 1; break;
+      }
+    }
+    result.set(a.id, { col, overlap: false });
+  }
+
+  // mark events that have at least one overlap
+  for (let i = 0; i < timed.length; i++) {
+    const a = timed[i];
+    const aS = toMin(a.start);
+    const aE = Math.max(aS + 30, a.end ? toMin(a.end) : aS + 30);
+    for (let j = 0; j < timed.length; j++) {
+      if (i === j) continue;
+      const b = timed[j];
+      const bS = toMin(b.start);
+      const bE = Math.max(bS + 30, b.end ? toMin(b.end) : bS + 30);
+      if (overlapsTime(aS,aE,bS,bE)) {
+        result.get(a.id).overlap = true; break;
+      }
+    }
+  }
+  return result;
 }
 
 /* ══════════════════════════
@@ -1160,6 +1252,7 @@ function delMemo(i) {
 ══════════════════════════ */
 document.getElementById('header-date').textContent =
   TODAY.toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'});
+document.getElementById('header-ver').textContent = VERSION;
 
 setInterval(() => {
   if (currentView === 'week' || currentView === 'day') renderCurrentView();
