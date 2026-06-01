@@ -83,7 +83,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* date jump */
 .date-jump-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s}
 .date-jump-overlay.open{opacity:1;pointer-events:all}
-.date-jump-pop{background:var(--bg);border-radius:18px;padding:22px 18px 18px;width:300px;max-width:92vw;transform:scale(.95);transition:transform .15s}
+.date-jump-pop{background:var(--bg);border-radius:18px;width:300px;max-width:92vw;box-sizing:border-box;overflow:hidden;transform:scale(.95);transition:transform .15s}
+.date-jump-inner{padding:22px 18px 18px}
 .date-jump-overlay.open .date-jump-pop{transform:scale(1)}
 .date-jump-pop h3{font-size:15px;font-weight:500;margin-bottom:14px}
 .date-jump-pop .form-input{margin-bottom:12px}
@@ -335,11 +336,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 <!-- ══ DATE JUMP MODAL ══ -->
 <div class="date-jump-overlay" id="date-jump-overlay" onclick="closeDateJumper()">
   <div class="date-jump-pop" onclick="event.stopPropagation()">
-    <h3>日付を選択</h3>
-    <input class="form-input" type="date" id="date-jump-input">
-    <div style="display:flex;gap:8px">
-      <button class="btn-cancel" style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:none;border:0.5px solid var(--border2);color:var(--text2)" onclick="closeDateJumper()">キャンセル</button>
-      <button class="btn-save"   style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:var(--text);border:none;color:#fff;font-weight:500" onclick="confirmDateJump()">移動</button>
+    <div class="date-jump-inner">
+      <h3>日付を選択</h3>
+      <input class="form-input" type="date" id="date-jump-input" style="margin-bottom:12px">
+      <div style="display:flex;gap:8px">
+        <button class="btn-cancel" style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:none;border:0.5px solid var(--border2);color:var(--text2)" onclick="closeDateJumper()">キャンセル</button>
+        <button class="btn-save"   style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:var(--text);border:none;color:#fff;font-weight:500" onclick="confirmDateJump()">移動</button>
+      </div>
     </div>
   </div>
 </div>
