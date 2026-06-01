@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MyDiary">
+<title>MyDiary</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#fff;--bg2:#f6f6f2;--bg3:#eeecea;
+  --text:#1a1a1a;--text2:#666;--text3:#aaa;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.18);
+  --accent:#1a1a1a;--green:#1d9e75;--red:#e24b4a;--blue:#378add;
+  --r:10px;--rl:16px;
+}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+
+/* ── Header ── */
+.header{padding:12px 16px 8px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:20}
+.header h1{font-size:17px;font-weight:500}
+.header-date{font-size:12px;color:var(--text2)}
+
+/* ── Tab bar ── */
+.tabs{display:flex;border-bottom:0.5px solid var(--border);background:var(--bg);position:sticky;top:49px;z-index:20}
+.tab{flex:1;padding:9px 4px 7px;text-align:center;font-size:11px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.tab i{display:block;font-size:18px;margin-bottom:2px}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+
+/* ── Screens ── */
+.screen{display:none;flex:1;flex-direction:column}
+.screen.active{display:flex}
+
+/* ══ CALENDAR ══ */
+.cal-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.view-switcher{display:flex;gap:8px;margin:10px 16px 0}
+.view-btn{width:34px;height:34px;border-radius:50%;font-size:13px;font-weight:500;background:none;border:1.5px solid var(--border2);cursor:pointer;color:var(--text2);font-family:inherit;transition:all .18s;display:flex;align-items:center;justify-content:center;padding:0}
+.view-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+.view-btn:active{opacity:.7}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 6px}
+.cal-nav-btn{background:none;border:none;cursor:pointer;color:var(--text);padding:5px 8px;font-size:18px;border-radius:8px}
+.cal-nav-btn:active{background:var(--bg2)}
+.cal-nav-label{font-size:14px;font-weight:500;display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:8px;transition:background .15s}
+.cal-nav-label:hover{background:var(--bg2)}
+.cal-nav-label:active{background:var(--bg3)}
+.cal-nav-label i{font-size:13px;color:var(--text3)}
+.add-event-btn{display:flex;align-items:center;gap:4px;padding:6px 11px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit}
+.add-event-btn:active{background:var(--bg2)}
+
+/* ── Monthly ── */
+#view-month{padding:0 16px 16px}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px}
+.cal-dow{font-size:11px;color:var(--text2);padding:3px 0;font-weight:500}
+.cal-dow:first-child{color:var(--red)}
+.cal-dow:last-child{color:var(--blue)}
+.cal-body-month{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-cell{min-height:58px;border-radius:6px;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden}
+.cal-cell:active{background:var(--bg2)}
+.cal-cell .dnum{font-size:12px;text-align:center;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin:0 auto 2px}
+.cal-cell.today .dnum{background:var(--text);color:#fff}
+.cal-cell.other .dnum{color:var(--text3)}
+.cal-cell.sun .dnum{color:var(--red)}
+.cal-cell.sat .dnum{color:var(--blue)}
+.cal-cell.today.sun .dnum,.cal-cell.today.sat .dnum{background:var(--text);color:#fff}
+.evt-pill{font-size:9px;line-height:1.3;border-radius:3px;padding:1px 3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(0,0,0,.7);font-weight:500}
+/* date jump */
+.date-jump-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s}
+.date-jump-overlay.open{opacity:1;pointer-events:all}
+.date-jump-pop{background:var(--bg);border-radius:18px;padding:22px 18px 18px;width:300px;max-width:92vw;transform:scale(.95);transition:transform .15s}
+.date-jump-overlay.open .date-jump-pop{transform:scale(1)}
+.date-jump-pop h3{font-size:15px;font-weight:500;margin-bottom:14px}
+.date-jump-pop .form-input{margin-bottom:12px}
+
+/* ── Weekly ── */
+#view-week{display:none;flex:1;overflow:hidden;flex-direction:column}
+#view-week.show{display:flex}
+.week-head{display:grid;grid-template-columns:40px repeat(7,1fr);border-bottom:0.5px solid var(--border);padding:0 0 4px;margin:0 16px}
+.week-day-col{text-align:center;font-size:11px;color:var(--text2)}
+.week-day-col .wdow{font-size:10px;margin-bottom:2px}
+.week-day-col .wdnum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:12px}
+.week-day-col.today .wdnum{background:var(--text);color:#fff}
+.week-day-col.sun .wdow,.week-day-col.sun .wdnum{color:var(--red)}
+.week-day-col.sat .wdow,.week-day-col.sat .wdnum{color:var(--blue)}
+.week-day-col.today.sun .wdnum,.week-day-col.today.sat .wdnum{background:var(--text);color:#fff}
+.time-grid{flex:1;overflow-y:auto;position:relative;margin:0 16px}
+.time-row{display:grid;grid-template-columns:40px repeat(7,1fr);min-height:44px;border-bottom:0.5px solid var(--border)}
+.time-label{font-size:10px;color:var(--text3);padding:3px 6px 0 0;text-align:right;line-height:1}
+.time-cell{border-left:0.5px solid var(--border);position:relative;cursor:pointer}
+.time-cell:active{background:var(--bg2)}
+.time-evt{position:absolute;left:1px;right:1px;border-radius:4px;padding:2px 3px;font-size:9px;color:rgba(0,0,0,.7);font-weight:500;overflow:hidden;cursor:pointer;z-index:2;line-height:1.3}
+.now-line{position:absolute;left:0;right:0;z-index:5;pointer-events:none;display:flex;align-items:center}
+.now-line-dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;margin-left:-4px}
+.now-line-bar{flex:1;height:1.5px;background:var(--red)}
+.now-line-time{font-size:9px;color:var(--red);font-weight:500;padding:0 3px;white-space:nowrap}
+
+/* ── Daily ── */
+#view-day{display:none;flex:1;overflow:hidden;flex-direction:column}
+#view-day.show{display:flex}
+.day-head{padding:6px 16px 8px;border-bottom:0.5px solid var(--border)}
+.day-head-label{font-size:14px;font-weight:500}
+.day-time-grid{flex:1;overflow-y:auto}
+.day-row{display:grid;grid-template-columns:44px 1fr;min-height:52px;border-bottom:0.5px solid var(--border)}
+.day-time-lbl{font-size:11px;color:var(--text3);padding:4px 8px 0 16px;line-height:1}
+.day-slot{border-left:0.5px solid var(--border);position:relative;cursor:pointer;min-height:52px}
+.day-slot:active{background:var(--bg2)}
+.day-evt{position:absolute;left:4px;right:4px;border-radius:6px;padding:4px 7px;font-size:11px;color:rgba(0,0,0,.7);font-weight:500;overflow:hidden;cursor:pointer;z-index:2;line-height:1.4}
+.day-now-line{position:absolute;left:0;right:0;z-index:5;pointer-events:none;display:flex;align-items:center}
+.day-now-dot{width:9px;height:9px;border-radius:50%;background:var(--red);flex-shrink:0;margin-left:-4px}
+.day-now-bar{flex:1;height:1.5px;background:var(--red)}
+.day-now-time{font-size:10px;color:var(--red);font-weight:500;padding:0 4px;white-space:nowrap}
+
+/* ══ EVENT MODAL ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:430px;transform:translateY(20px);transition:transform .2s;max-height:92vh;overflow-y:auto}
+.modal-overlay.open .modal-sheet{transform:translateY(0)}
+.modal-title{font-size:16px;font-weight:500;margin-bottom:16px}
+.form-row{margin-bottom:12px}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block}
+.form-input{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+.form-input:focus{border-color:var(--text)}
+.form-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
+.form-select:focus{border-color:var(--text)}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.color-row{display:flex;gap:8px;flex-wrap:wrap}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.color-swatch.selected{border-color:var(--text);transform:scale(1.15)}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions button{flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit}
+.btn-cancel{background:none;border:0.5px solid var(--border2);color:var(--text2)}
+.btn-save{background:var(--text);border:none;color:#fff;font-weight:500}
+.btn-delete{background:none;border:0.5px solid var(--red);color:var(--red)}
+
+/* recur badge on detail */
+.recur-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);background:var(--bg2);border-radius:20px;padding:3px 9px;margin-bottom:8px}
+
+/* event detail sheet */
+.detail-sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:430px;transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .detail-sheet{transform:translateY(0)}
+.detail-color-bar{width:100%;height:5px;border-radius:3px;margin-bottom:14px}
+.detail-title{font-size:17px;font-weight:500;margin-bottom:6px}
+.detail-time{font-size:13px;color:var(--text2);margin-bottom:8px}
+.detail-note{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap}
+
+/* notification banner */
+.notif-banner{display:none;align-items:center;gap:8px;padding:10px 16px;background:#fffbe6;border-bottom:0.5px solid #e0d87a;font-size:12px;color:#7a6a00}
+.notif-banner.show{display:flex}
+.notif-banner button{margin-left:auto;padding:4px 10px;border:0.5px solid #c8b800;border-radius:8px;background:none;font-size:12px;cursor:pointer;font-family:inherit;color:#7a6a00;white-space:nowrap}
+
+/* ══ DIARY ══ */
+.diary-screen{padding:16px;flex:1;overflow-y:auto}
+.diary-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.diary-top-title{font-size:16px;font-weight:500}
+.diary-top-date{font-size:13px;color:var(--text2)}
+.diary-textarea{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:12px 13px;font-size:14px;line-height:1.7;resize:none;font-family:inherit;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+.diary-textarea:focus{border-color:var(--text)}
+.save-btn{width:100%;margin-top:10px;padding:12px;border:none;border-radius:var(--r);background:var(--text);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.save-btn:active{opacity:.75}
+.section{margin-top:18px;padding-top:14px;border-top:0.5px solid var(--border)}
+.section-title{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase}
+.entry-card{background:var(--bg2);border-radius:var(--r);padding:11px 13px;margin-bottom:8px}
+.entry-date{font-size:11px;color:var(--text2);margin-bottom:4px}
+.entry-preview{font-size:13px;line-height:1.55;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.empty-msg{text-align:center;color:var(--text3);font-size:13px;padding:28px 0}
+
+/* ══ MEMO ══ */
+.memo-screen{padding:16px;flex:1;overflow-y:auto}
+.memo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.memo-header h2{font-size:16px;font-weight:500}
+.new-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
+.memo-form{background:var(--bg2);border-radius:var(--rl);padding:14px;margin-bottom:14px;display:none}
+.memo-form.open{display:block}
+.memo-form h3{font-size:14px;font-weight:500;margin-bottom:10px}
+.memo-input{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;margin-bottom:8px}
+.memo-input:focus{border-color:var(--text)}
+.form-actions-row{display:flex;gap:8px;margin-top:4px}
+.form-actions-row button{flex:1;padding:10px;border-radius:var(--r);font-size:13px;cursor:pointer;font-family:inherit}
+.btn-c{background:none;border:0.5px solid var(--border2);color:var(--text2)}
+.btn-o{background:var(--text);border:none;color:#fff;font-weight:500}
+.memo-card{background:var(--bg2);border-radius:var(--r);padding:12px 13px;margin-bottom:8px}
+.memo-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.memo-card-title{font-size:14px;font-weight:500;flex:1;line-height:1.4}
+.memo-card-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:0 0 0 8px;font-size:16px}
+.memo-card-body{font-size:13px;color:var(--text2);line-height:1.55;white-space:pre-wrap}
+.memo-card-time{font-size:11px;color:var(--text3);margin-top:6px}
+/* checklist */
+.check-add-row{display:flex;gap:6px}
+.check-add-input{flex:1;border:0.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+.check-add-input:focus{border-color:var(--text)}
+.check-add-btn{padding:7px 12px;border:0.5px solid var(--border2);border-radius:8px;background:none;color:var(--text);font-size:18px;cursor:pointer;line-height:1;display:flex;align-items:center}
+.check-add-btn:active{background:var(--bg2)}
+.check-group{margin-top:8px}
+.check-group-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.05em;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.check-group-label span{background:var(--bg3);border-radius:10px;padding:1px 6px;font-size:10px}
+.check-group-label.done-label{color:var(--green)}
+.check-group-label.done-label span{background:#e6f5ef;color:var(--green)}
+.memo-checklist{display:flex;flex-direction:column;gap:2px}
+.memo-check-item{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;user-select:none}
+.memo-check-item .ci-box{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.memo-check-item.done .ci-box{background:var(--text);border-color:var(--text)}
+.memo-check-item.done .ci-box::after{content:'';width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block}
+.memo-check-item .ci-label{font-size:13px;color:var(--text2);line-height:1.4;transition:all .15s}
+.memo-check-item.done .ci-label{text-decoration:line-through;color:var(--text3)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <h1 id="header-title">カレンダー</h1>
+    <span class="header-date" id="header-date"></span>
+  </div>
+
+  <!-- Notification permission banner -->
+  <div class="notif-banner" id="notif-banner">
+    <i class="ti ti-bell"></i>
+    <span>リマインダー通知を有効にしますか？</span>
+    <button onclick="requestNotifPermission()">許可する</button>
+    <button onclick="dismissNotifBanner()" style="border:none;color:var(--text3);background:none;font-size:18px;padding:0 0 0 4px">×</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('calendar')"><i class="ti ti-calendar" aria-hidden="true"></i>カレンダー</div>
+    <div class="tab" onclick="switchTab('diary')"><i class="ti ti-book" aria-hidden="true"></i>日記</div>
+    <div class="tab" onclick="switchTab('memo')"><i class="ti ti-notes" aria-hidden="true"></i>メモ帳</div>
+  </div>
+
+  <!-- ══ CALENDAR SCREEN ══ -->
+  <div id="screen-calendar" class="screen active">
+    <div class="cal-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 0">
+        <div class="view-switcher">
+          <button class="view-btn active" id="vbtn-month" onclick="setView('month')">月</button>
+          <button class="view-btn" id="vbtn-week" onclick="setView('week')">週</button>
+          <button class="view-btn" id="vbtn-day" onclick="setView('day')">日</button>
+        </div>
+        <button class="add-event-btn" onclick="openAddModal()"><i class="ti ti-plus" aria-hidden="true"></i>予定を追加</button>
+      </div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="navBack()"><i class="ti ti-chevron-left"></i></button>
+        <span class="cal-nav-label" id="cal-nav-label" onclick="openDateJumper()" style="cursor:pointer" title="日付を選択"><i class="ti ti-chevron-down"></i></span>
+        <button class="cal-nav-btn" onclick="navFwd()"><i class="ti ti-chevron-right"></i></button>
+      </div>
+
+      <!-- Monthly view -->
+      <div id="view-month">
+        <div class="cal-head">
+          <div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div>
+          <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div>
+        </div>
+        <div class="cal-body-month" id="cal-body-month"></div>
+      </div>
+
+      <!-- Weekly view -->
+      <div id="view-week">
+        <div class="week-head" id="week-head"><div></div></div>
+        <div class="time-grid" id="time-grid-week"></div>
+      </div>
+
+      <!-- Daily view -->
+      <div id="view-day">
+        <div class="day-head"><div class="day-head-label" id="day-head-label"></div></div>
+        <div class="day-time-grid" id="time-grid-day"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DIARY SCREEN ══ -->
+  <div id="screen-diary" class="screen">
+    <div class="diary-screen">
+      <div class="diary-top">
+        <span class="diary-top-title">今日の日記</span>
+        <span class="diary-top-date" id="diary-date-label"></span>
+      </div>
+      <textarea class="diary-textarea" id="diary-text" rows="10" placeholder="今日はどんな一日でしたか？"></textarea>
+      <button class="save-btn" id="diary-btn" onclick="saveDiary()">保存する</button>
+      <div class="section">
+        <div class="section-title">最近の日記</div>
+        <div id="diary-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MEMO SCREEN ══ -->
+  <div id="screen-memo" class="screen">
+    <div class="memo-screen">
+      <div class="memo-header">
+        <h2>メモ帳</h2>
+        <button class="new-btn" onclick="toggleMemoForm()"><i class="ti ti-plus" aria-hidden="true"></i>新規</button>
+      </div>
+      <div class="memo-form" id="memo-form">
+        <h3>新しいメモ</h3>
+        <input class="memo-input" type="text" id="memo-title-in" placeholder="タイトル">
+        <textarea class="memo-input diary-textarea" id="memo-body-in" rows="3" placeholder="メモの内容を入力…" style="margin-bottom:0"></textarea>
+        <div class="form-actions-row" style="margin-top:10px">
+          <button class="btn-c" onclick="toggleMemoForm()">キャンセル</button>
+          <button class="btn-o" onclick="saveMemo()">保存</button>
+        </div>
+      </div>
+      <div id="memo-list"></div>
+    </div>
+  </div>
+
+</div><!-- .app -->
+
+<!-- ══ DATE JUMP MODAL ══ -->
+<div class="date-jump-overlay" id="date-jump-overlay" onclick="closeDateJumper()">
+  <div class="date-jump-pop" onclick="event.stopPropagation()">
+    <h3>日付を選択</h3>
+    <input class="form-input" type="date" id="date-jump-input">
+    <div style="display:flex;gap:8px">
+      <button class="btn-cancel" style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:none;border:0.5px solid var(--border2);color:var(--text2)" onclick="closeDateJumper()">キャンセル</button>
+      <button class="btn-save"   style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:var(--text);border:none;color:#fff;font-weight:500" onclick="confirmDateJump()">移動</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD/EDIT EVENT MODAL ══ -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-sheet">
+    <div class="modal-title" id="modal-title-text">予定を追加</div>
+    <div class="form-row">
+      <label class="form-label">タイトル</label>
+      <input class="form-input" type="text" id="evt-title" placeholder="予定のタイトル">
+    </div>
+    <div class="form-row">
+      <label class="form-label">日付</label>
+      <input class="form-input" type="date" id="evt-date">
+    </div>
+    <div class="form-row">
+      <label class="form-label">時間（任意）</label>
+      <div class="form-row-2">
+        <input class="form-input" type="time" id="evt-start" placeholder="開始">
+        <input class="form-input" type="time" id="evt-end" placeholder="終了">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">繰り返し</label>
+      <select class="form-select" id="evt-recur" onchange="onRecurChange()">
+        <option value="none">なし</option>
+        <option value="daily">毎日</option>
+        <option value="weekly">毎週</option>
+        <option value="monthly">毎月</option>
+        <option value="yearly">毎年</option>
+      </select>
+    </div>
+    <div class="form-row" id="recur-end-row" style="display:none">
+      <label class="form-label">繰り返し終了日（任意）</label>
+      <input class="form-input" type="date" id="evt-recur-end">
+    </div>
+    <div class="form-row">
+      <label class="form-label">リマインダー</label>
+      <select class="form-select" id="evt-reminder">
+        <option value="none">なし</option>
+        <option value="0">時刻通り</option>
+        <option value="5">5分前</option>
+        <option value="10">10分前</option>
+        <option value="30">30分前</option>
+        <option value="60">1時間前</option>
+        <option value="1440">1日前</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">メモ（任意）</label>
+      <textarea class="form-input diary-textarea" id="evt-note" rows="2" placeholder="詳細メモ"></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">カラー</label>
+      <div class="color-row" id="color-swatches"></div>
+    </div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ══ EVENT DETAIL MODAL ══ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="detail-sheet">
+    <div class="detail-color-bar" id="detail-color-bar"></div>
+    <div class="detail-title" id="detail-title"></div>
+    <div class="detail-time" id="detail-time"></div>
+    <div id="detail-recur-wrap"></div>
+    <div id="detail-reminder-wrap"></div>
+    <div class="detail-note" id="detail-note"></div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn-cancel" onclick="closeDetail()">閉じる</button>
+      <button class="btn-delete" onclick="deleteEventFromDetail()">削除</button>
+      <button class="btn-save" onclick="editEventFromDetail()">編集</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════
+   DATA
+══════════════════════════ */
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+const EVENT_COLORS = [
+  {name:'ピンク',   hex:'#ffb3c6'},
+  {name:'オレンジ', hex:'#ffd4a8'},
+  {name:'黄',      hex:'#fff0a3'},
+  {name:'ミント',   hex:'#a8e6cf'},
+  {name:'スカイ',   hex:'#a8d8f0'},
+  {name:'ラベンダー',hex:'#c5b8f5'},
+  {name:'ライラック',hex:'#e8b8e8'},
+  {name:'グレー',   hex:'#d4d2ce'},
+];
+
+const RECUR_LABELS = {none:'なし',daily:'毎日',weekly:'毎週',monthly:'毎月',yearly:'毎年'};
+const REMINDER_LABELS = {none:'なし','0':'時刻通り','5':'5分前','10':'10分前','30':'30分前','60':'1時間前','1440':'1日前'};
+
+let events = [];
+let diaries = {};
+let memos = [];
+try { events  = JSON.parse(localStorage.getItem('md_events')  || '[]'); } catch(e){}
+try { diaries = JSON.parse(localStorage.getItem('md_diaries') || '{}'); } catch(e){}
+try { memos   = JSON.parse(localStorage.getItem('md_memos')   || '[]'); } catch(e){}
+
+function persist() {
+  try {
+    localStorage.setItem('md_events',  JSON.stringify(events));
+    localStorage.setItem('md_diaries', JSON.stringify(diaries));
+    localStorage.setItem('md_memos',   JSON.stringify(memos));
+  } catch(e) {}
+}
+
+/* ══════════════════════════
+   HELPERS
+══════════════════════════ */
+function fmt(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function parseDateStr(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function dayLabel(dateStr) {
+  const d = parseDateStr(dateStr);
+  const DOW = ['日','月','火','水','木','金','土'];
+  const p = dateStr.split('-');
+  return p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日('+DOW[d.getDay()]+')';
+}
+function setNavLabel(text) {
+  document.getElementById('cal-nav-label').innerHTML =
+    text + ' <i class="ti ti-chevron-down"></i>';
+}
+function addDays(d, n) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+function weekStart(d) {
+  const day = d.getDay();
+  const diff = (day === 0) ? -6 : 1 - day;
+  const r = new Date(d);
+  r.setDate(d.getDate() + diff);
+  r.setHours(0,0,0,0);
+  return r;
+}
+
+/* ══════════════════════════
+   RECURRENCE
+══════════════════════════ */
+function matchesRecurrence(evt, dateStr) {
+  if (!evt.recur || evt.recur === 'none') return false;
+  const base   = parseDateStr(evt.date);
+  const target = parseDateStr(dateStr);
+  // only future occurrences; base date itself is handled as direct match
+  if (target <= base) return false;
+  if (evt.recurEnd && target > parseDateStr(evt.recurEnd)) return false;
+  switch (evt.recur) {
+    case 'daily':   return true;
+    case 'weekly':  return base.getDay() === target.getDay();
+    case 'monthly': return base.getDate() === target.getDate();
+    case 'yearly':  return base.getMonth() === target.getMonth() && base.getDate() === target.getDate();
+    default: return false;
+  }
+}
+
+function eventsOn(dateStr) {
+  return events.filter(e => e.date === dateStr || matchesRecurrence(e, dateStr))
+    .sort((a,b) => {
+      if (!a.start && !b.start) return 0;
+      if (!a.start) return -1;
+      if (!b.start) return 1;
+      return a.start.localeCompare(b.start);
+    });
+}
+
+function isRecurringInstance(evt, dateStr) {
+  return evt.date !== dateStr && matchesRecurrence(evt, dateStr);
+}
+
+/* ══════════════════════════
+   NOTIFICATIONS
+══════════════════════════ */
+function initNotifications() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    document.getElementById('notif-banner').classList.add('show');
+  } else if (Notification.permission === 'granted') {
+    scheduleReminders();
+  }
+}
+
+function requestNotifPermission() {
+  Notification.requestPermission().then(p => {
+    dismissNotifBanner();
+    if (p === 'granted') scheduleReminders();
+  });
+}
+
+function dismissNotifBanner() {
+  document.getElementById('notif-banner').classList.remove('show');
+}
+
+function scheduleReminders() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+
+  events.forEach(evt => {
+    if (!evt.reminder || evt.reminder === 'none') return;
+    if (!evt.start) return;
+    const reminderMin = parseInt(evt.reminder);
+
+    // Check today and tomorrow for occurrences
+    for (let i = 0; i < 2; i++) {
+      const d = addDays(TODAY, i);
+      const dStr = fmt(d);
+      if (evt.date !== dStr && !matchesRecurrence(evt, dStr)) continue;
+
+      const [h, m] = evt.start.split(':').map(Number);
+      const eventTime = new Date(d);
+      eventTime.setHours(h, m, 0, 0);
+      const notifyTime = new Date(eventTime.getTime() - reminderMin * 60000);
+      const delay = notifyTime.getTime() - now.getTime();
+
+      if (delay > 0 && delay < 48 * 60 * 60 * 1000) {
+        const key = 'notif_' + evt.id + '_' + dStr;
+        if (!sessionStorage.getItem(key)) {
+          setTimeout(() => {
+            const timeLabel = reminderMin > 0 ? reminderMin + '分後に開始' : '開始時刻です';
+            new Notification('📅 ' + evt.title, {
+              body: dayLabel(dStr) + ' ' + evt.start + '\n' + timeLabel,
+            });
+            sessionStorage.setItem(key, '1');
+          }, delay);
+        }
+      }
+    }
+  });
+}
+
+/* ══════════════════════════
+   STATE
+══════════════════════════ */
+let currentView = 'month';
+let calCursor = new Date(TODAY);
+
+/* ══════════════════════════
+   TAB SWITCHING
+══════════════════════════ */
+function switchTab(t) {
+  ['calendar','diary','memo'].forEach((s,i) => {
+    document.getElementById('screen-'+s).classList.toggle('active', s===t);
+    document.querySelectorAll('.tab')[i].classList.toggle('active', s===t);
+  });
+  document.getElementById('header-title').textContent = {calendar:'カレンダー',diary:'日記',memo:'メモ帳'}[t];
+  if (t==='diary') renderDiary();
+  if (t==='memo')  renderMemos();
+}
+
+/* ══════════════════════════
+   VIEW SWITCHING
+══════════════════════════ */
+function setView(v) {
+  if (currentView === v) calCursor = new Date(TODAY);
+  currentView = v;
+  ['month','week','day'].forEach(x => {
+    document.getElementById('vbtn-'+x).classList.toggle('active', x===v);
+    const el = document.getElementById('view-'+x);
+    if (x === 'month') { el.style.display = v==='month' ? '' : 'none'; }
+    else { el.classList.toggle('show', x===v); }
+  });
+  renderCurrentView();
+}
+
+function navBack() {
+  if (currentView==='month') calCursor.setMonth(calCursor.getMonth()-1);
+  else if (currentView==='week') calCursor.setDate(calCursor.getDate()-7);
+  else calCursor.setDate(calCursor.getDate()-1);
+  renderCurrentView();
+}
+function navFwd() {
+  if (currentView==='month') calCursor.setMonth(calCursor.getMonth()+1);
+  else if (currentView==='week') calCursor.setDate(calCursor.getDate()+7);
+  else calCursor.setDate(calCursor.getDate()+1);
+  renderCurrentView();
+}
+function renderCurrentView() {
+  if (currentView==='month') renderMonth();
+  else if (currentView==='week') renderWeek();
+  else renderDay();
+}
+function jumpToToday() {
+  calCursor = new Date(TODAY);
+  renderCurrentView();
+}
+
+function openDateJumper() {
+  const input = document.getElementById('date-jump-input');
+  input.type = 'date';
+  input.value = fmt(calCursor);
+  document.getElementById('date-jump-overlay').classList.add('open');
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeDateJumper() {
+  document.getElementById('date-jump-overlay').classList.remove('open');
+}
+
+function confirmDateJump() {
+  const val = document.getElementById('date-jump-input').value;
+  if (!val) return;
+  calCursor = parseDateStr(val);
+  closeDateJumper();
+  renderCurrentView();
+}
+
+/* ══════════════════════════
+   MONTHLY VIEW
+══════════════════════════ */
+function renderMonth() {
+  const y = calCursor.getFullYear(), m = calCursor.getMonth();
+  setNavLabel(y+'年'+(m+1)+'月');
+  const fd = new Date(y, m, 1).getDay();
+  const ld = new Date(y, m+1, 0).getDate();
+  const pl = new Date(y, m, 0).getDate();
+  let h = '';
+  for (let i = 0; i < fd; i++) {
+    const d = pl - fd + 1 + i;
+    const pm = m === 0 ? 12 : m;
+    const py = m === 0 ? y-1 : y;
+    const k = py+'-'+String(pm).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    h += monthCell(d, k, true);
+  }
+  for (let d = 1; d <= ld; d++) {
+    const k = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dw = (fd+d-1)%7;
+    const isT = fmt(TODAY)===k;
+    const cls = [isT?'today':'', dw===0?'sun':dw===6?'sat':''].filter(Boolean).join(' ');
+    h += monthCell(d, k, false, cls);
+  }
+  const rem = (7-((fd+ld)%7))%7;
+  for (let i = 1; i <= rem; i++) {
+    const nm = m === 11 ? 1 : m+2;
+    const ny = m === 11 ? y+1 : y;
+    const k = ny+'-'+String(nm).padStart(2,'0')+'-'+String(i).padStart(2,'0');
+    h += monthCell(i, k, true);
+  }
+  document.getElementById('cal-body-month').innerHTML = h;
+}
+
+function monthCell(d, k, other, extra='') {
+  const evts = eventsOn(k);
+  const pills = evts.slice(0,2).map(e => {
+    const truncated = e.title.length > 5 ? e.title.slice(0,5)+'…' : e.title;
+    return `<div class="evt-pill" style="background:${e.color}">${truncated}</div>`;
+  }).join('');
+  const moreDot = evts.length > 2 ? `<div style="font-size:9px;color:var(--text3);text-align:center">…</div>` : '';
+  const cls = ['cal-cell', other?'other':'', extra].filter(Boolean).join(' ');
+  return `<div class="${cls}" onclick="onMonthDayClick('${k}')">
+    <div class="dnum">${d}</div>${pills}${moreDot}
+  </div>`;
+}
+
+function onMonthDayClick(k) {
+  calCursor = parseDateStr(k);
+  setView('day');
+}
+
+/* ══════════════════════════
+   WEEKLY VIEW
+══════════════════════════ */
+function renderWeek() {
+  const ws = weekStart(calCursor);
+  const we = addDays(ws, 6);
+  const ys = ws.getFullYear(), ms = ws.getMonth()+1, ds = ws.getDate();
+  const ye = we.getFullYear(), me = we.getMonth()+1, de = we.getDate();
+  setNavLabel((ys===ye ? '' : ys+'年') + ms+'月'+ds+'日 〜 '+(ms===me?'':me+'月')+de+'日');
+
+  let headH = '<div style="font-size:10px;color:var(--text3);text-align:right;padding-right:4px;padding-top:3px">時</div>';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i);
+    const dStr = fmt(d);
+    const isT = dStr === fmt(TODAY);
+    const dw = d.getDay();
+    const dowLabel = ['日','月','火','水','木','金','土'][dw];
+    const sunCls = dw===0?'sun':''; const satCls = dw===6?'sat':'';
+    const todCls = isT?'today':'';
+    headH += `<div class="week-day-col ${sunCls} ${satCls} ${todCls}">
+      <div class="wdow">${dowLabel}</div>
+      <div class="wdnum">${d.getDate()}</div>
+    </div>`;
+  }
+  document.getElementById('week-head').innerHTML = headH;
+
+  const CELL_H = 44;
+  let gridH = '';
+  for (let hr = 0; hr < 24; hr++) {
+    gridH += `<div class="time-row">
+      <div class="time-label">${String(hr).padStart(2,'0')}:00</div>`;
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(ws, i);
+      const dStr = fmt(d);
+      gridH += `<div class="time-cell" onclick="openAddModal('${dStr}','${String(hr).padStart(2,'0')}:00')"></div>`;
+    }
+    gridH += '</div>';
+  }
+  document.getElementById('time-grid-week').innerHTML = gridH;
+
+  const grid = document.getElementById('time-grid-week');
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i);
+    const dStr = fmt(d);
+    eventsOn(dStr).forEach(evt => {
+      if (!evt.start) return;
+      const [sh, sm] = evt.start.split(':').map(Number);
+      const [eh, em] = (evt.end||evt.start).split(':').map(Number);
+      const topPx = (sh + sm/60) * CELL_H;
+      const duration = Math.max(0.5, (eh + em/60) - (sh + sm/60));
+      const heightPx = duration * CELL_H;
+      const rowEls = grid.querySelectorAll('.time-row');
+      const rowEl = rowEls[sh];
+      if (!rowEl) return;
+      const cellEl = rowEl.querySelectorAll('.time-cell')[i];
+      if (!cellEl) return;
+      const pill = document.createElement('div');
+      pill.className = 'time-evt';
+      pill.style.cssText = `background:${evt.color};top:${sm/60*CELL_H}px;height:${heightPx}px;`;
+      const label = evt.title.length > 6 ? evt.title.slice(0,6)+'…' : evt.title;
+      pill.innerHTML = `<span>${evt.start} ${label}</span>`;
+      pill.onclick = (e) => { e.stopPropagation(); showDetail(evt.id, dStr); };
+      cellEl.style.position = 'relative';
+      cellEl.appendChild(pill);
+    });
+  }
+
+  // Now line
+  const todayStr = fmt(TODAY);
+  const ws2 = weekStart(calCursor);
+  const isThisWeek = todayStr >= fmt(ws2) && todayStr <= fmt(addDays(ws2, 6));
+  if (isThisWeek) {
+    const now = new Date();
+    const nowH = now.getHours(), nowM = now.getMinutes();
+    const todayDow = TODAY.getDay();
+    const colIdx = todayDow === 0 ? 6 : todayDow - 1;
+    const rowEls = grid.querySelectorAll('.time-row');
+    const rowEl = rowEls[nowH];
+    if (rowEl) {
+      const cellEl = rowEl.querySelectorAll('.time-cell')[colIdx];
+      if (cellEl) {
+        cellEl.style.position = 'relative';
+        const line = document.createElement('div');
+        line.className = 'now-line';
+        const timeLabel = String(nowH).padStart(2,'0')+':'+String(nowM).padStart(2,'0');
+        line.style.top = (nowM/60*CELL_H) + 'px';
+        line.innerHTML = `<div class="now-line-dot"></div><div class="now-line-bar"></div><div class="now-line-time">${timeLabel}</div>`;
+        cellEl.appendChild(line);
+      }
+    }
+    setTimeout(() => { grid.scrollTop = Math.max(0, nowH * CELL_H - 80); }, 50);
+  }
+}
+
+/* ══════════════════════════
+   DAILY VIEW
+══════════════════════════ */
+function renderDay() {
+  const dStr = fmt(calCursor);
+  setNavLabel(dayLabel(dStr));
+  document.getElementById('day-head-label').textContent = dayLabel(dStr);
+
+  const CELL_H = 56;  // height for busy hours (event sizing base)
+  const EMPTY_H = 20; // height for empty hours
+
+  const dayEvts = eventsOn(dStr);
+
+  // determine which hours are "busy" (have events overlapping them)
+  const busyHours = new Set();
+  if (dStr === fmt(TODAY)) {
+    busyHours.add(new Date().getHours()); // keep now-line hour full height
+  }
+  dayEvts.forEach(evt => {
+    if (!evt.start) { busyHours.add(0); return; }
+    const [sh, sm] = evt.start.split(':').map(Number);
+    const [eh, em] = (evt.end || evt.start).split(':').map(Number);
+    const endH = em > 0 ? eh : Math.max(sh, eh - 1);
+    for (let h = sh; h <= Math.min(endH, 23); h++) busyHours.add(h);
+  });
+
+  let html = '';
+  for (let hr = 0; hr < 24; hr++) {
+    const busy = busyHours.has(hr);
+    const rowH = busy ? CELL_H : EMPTY_H;
+    const lblStyle = busy ? '' : 'font-size:9px;color:var(--text3);opacity:0.7;';
+    html += `<div class="day-row" style="min-height:${rowH}px;border-bottom:0.5px solid var(--border)">
+      <div class="day-time-lbl" style="${lblStyle}">${String(hr).padStart(2,'0')}:00</div>
+      <div class="day-slot" id="dslot-${hr}" style="min-height:${rowH}px" onclick="openAddModal('${dStr}','${String(hr).padStart(2,'0')}:00')"></div>
+    </div>`;
+  }
+  document.getElementById('time-grid-day').innerHTML = html;
+
+  dayEvts.forEach(evt => {
+    if (!evt.start) {
+      const slot = document.getElementById('dslot-0');
+      if (!slot) return;
+      const pill = document.createElement('div');
+      pill.className = 'day-evt';
+      pill.style.cssText = `background:${evt.color};position:relative;left:4px;right:4px;margin:4px;`;
+      pill.innerHTML = evt.title;
+      pill.onclick = (e) => { e.stopPropagation(); showDetail(evt.id, dStr); };
+      slot.parentNode.insertBefore(pill, slot.parentNode.firstChild);
+      return;
+    }
+    const [sh, sm] = evt.start.split(':').map(Number);
+    const [eh, em] = (evt.end || evt.start).split(':').map(Number);
+    const duration = Math.max(0.5, (eh + em/60) - (sh + sm/60));
+    const slot = document.getElementById('dslot-'+sh);
+    if (!slot) return;
+    const pill = document.createElement('div');
+    pill.className = 'day-evt';
+    const heightPx = duration * CELL_H - 4;
+    pill.style.cssText = `background:${evt.color};top:${sm/60*CELL_H+2}px;height:${heightPx}px;overflow:visible;`;
+    pill.innerHTML = `<strong>${evt.start}${evt.end?' 〜 '+evt.end:''}</strong><br>${evt.title}`;
+    pill.onclick = (e) => { e.stopPropagation(); showDetail(evt.id, dStr); };
+    slot.style.position = 'relative';
+    slot.style.overflow = 'visible';
+    slot.appendChild(pill);
+  });
+
+  // Now line
+  if (dStr === fmt(TODAY)) {
+    const now = new Date();
+    const nowH = now.getHours(), nowM = now.getMinutes();
+    const slot = document.getElementById('dslot-'+nowH);
+    if (slot) {
+      slot.style.position = 'relative';
+      const line = document.createElement('div');
+      line.className = 'day-now-line';
+      const timeLabel = String(nowH).padStart(2,'0')+':'+String(nowM).padStart(2,'0');
+      line.style.top = (nowM/60*CELL_H) + 'px';
+      line.innerHTML = `<div class="day-now-dot"></div><div class="day-now-bar"></div><div class="day-now-time">${timeLabel}</div>`;
+      slot.appendChild(line);
+    }
+    setTimeout(() => {
+      const grid = document.getElementById('time-grid-day');
+      grid.scrollTop = Math.max(0, nowH * CELL_H - 80);
+    }, 50);
+  }
+}
+
+/* ══════════════════════════
+   EVENT MODAL (ADD/EDIT)
+══════════════════════════ */
+let editingId = null;
+let selectedColor = EVENT_COLORS[4].hex;
+
+function buildColorSwatches() {
+  const row = document.getElementById('color-swatches');
+  row.innerHTML = EVENT_COLORS.map(c =>
+    `<div class="color-swatch${c.hex===selectedColor?' selected':''}"
+      style="background:${c.hex}" title="${c.name}"
+      onclick="pickColor('${c.hex}')"></div>`
+  ).join('');
+}
+
+function pickColor(hex) {
+  selectedColor = hex;
+  buildColorSwatches();
+}
+
+function onRecurChange() {
+  const v = document.getElementById('evt-recur').value;
+  document.getElementById('recur-end-row').style.display = v === 'none' ? 'none' : '';
+}
+
+function openAddModal(dateStr, timeStr) {
+  editingId = null;
+  document.getElementById('modal-title-text').textContent = '予定を追加';
+  document.getElementById('evt-title').value = '';
+  document.getElementById('evt-date').value = dateStr || fmt(calCursor);
+  document.getElementById('evt-start').value = timeStr || '';
+  document.getElementById('evt-end').value = '';
+  document.getElementById('evt-note').value = '';
+  document.getElementById('evt-recur').value = 'none';
+  document.getElementById('evt-recur-end').value = '';
+  document.getElementById('evt-reminder').value = 'none';
+  document.getElementById('recur-end-row').style.display = 'none';
+  selectedColor = EVENT_COLORS[4].hex;
+  buildColorSwatches();
+  document.getElementById('modal-actions').innerHTML =
+    `<button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+     <button class="btn-save" onclick="saveEvent()">保存</button>`;
+  document.getElementById('event-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const evt = events.find(e => e.id === id);
+  if (!evt) return;
+  editingId = id;
+  document.getElementById('modal-title-text').textContent = '予定を編集';
+  document.getElementById('evt-title').value = evt.title;
+  document.getElementById('evt-date').value = evt.date;
+  document.getElementById('evt-start').value = evt.start || '';
+  document.getElementById('evt-end').value = evt.end || '';
+  document.getElementById('evt-note').value = evt.note || '';
+  document.getElementById('evt-recur').value = evt.recur || 'none';
+  document.getElementById('evt-recur-end').value = evt.recurEnd || '';
+  document.getElementById('evt-reminder').value = evt.reminder || 'none';
+  document.getElementById('recur-end-row').style.display = (evt.recur && evt.recur !== 'none') ? '' : 'none';
+  selectedColor = evt.color;
+  buildColorSwatches();
+  document.getElementById('modal-actions').innerHTML =
+    `<button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+     <button class="btn-save" onclick="saveEvent()">保存</button>`;
+  closeDetail();
+  document.getElementById('event-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('event-modal').classList.remove('open');
+}
+
+function saveEvent() {
+  const title = document.getElementById('evt-title').value.trim();
+  if (!title) { document.getElementById('evt-title').focus(); return; }
+  const date     = document.getElementById('evt-date').value;
+  const start    = document.getElementById('evt-start').value;
+  const end      = document.getElementById('evt-end').value;
+  const note     = document.getElementById('evt-note').value.trim();
+  const recur    = document.getElementById('evt-recur').value;
+  const recurEnd = document.getElementById('evt-recur-end').value;
+  const reminder = document.getElementById('evt-reminder').value;
+  if (!date) { document.getElementById('evt-date').focus(); return; }
+
+  const evtData = { title, date, start, end, note, color: selectedColor, recur, recurEnd, reminder };
+
+  if (editingId) {
+    const idx = events.findIndex(e => e.id === editingId);
+    if (idx !== -1) events[idx] = { id: editingId, ...evtData };
+  } else {
+    events.push({ id: Date.now().toString(), ...evtData });
+  }
+  persist();
+  closeModal();
+  renderCurrentView();
+  scheduleReminders();
+}
+
+/* ══════════════════════════
+   EVENT DETAIL
+══════════════════════════ */
+let detailId = null;
+let detailDateStr = null;
+
+function showDetail(id, dateStr) {
+  const evt = events.find(e => e.id === id);
+  if (!evt) return;
+  detailId = id;
+  detailDateStr = dateStr || evt.date;
+  document.getElementById('detail-color-bar').style.background = evt.color;
+  document.getElementById('detail-title').textContent = evt.title;
+  let timeText = dayLabel(detailDateStr);
+  if (evt.start) timeText += '　' + evt.start + (evt.end ? ' 〜 ' + evt.end : '');
+  document.getElementById('detail-time').textContent = timeText;
+  document.getElementById('detail-note').textContent = evt.note || '';
+
+  // Recurrence badge
+  const recurWrap = document.getElementById('detail-recur-wrap');
+  if (evt.recur && evt.recur !== 'none') {
+    let recurText = RECUR_LABELS[evt.recur];
+    if (evt.recurEnd) recurText += '（' + evt.recurEnd + 'まで）';
+    recurWrap.innerHTML = `<div class="recur-badge"><i class="ti ti-refresh"></i>${recurText}</div>`;
+  } else {
+    recurWrap.innerHTML = '';
+  }
+
+  // Reminder badge
+  const reminderWrap = document.getElementById('detail-reminder-wrap');
+  if (evt.reminder && evt.reminder !== 'none') {
+    reminderWrap.innerHTML = `<div class="recur-badge" style="margin-bottom:10px"><i class="ti ti-bell"></i>リマインダー: ${REMINDER_LABELS[evt.reminder]}</div>`;
+  } else {
+    reminderWrap.innerHTML = '';
+  }
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-modal').classList.remove('open');
+  detailId = null;
+  detailDateStr = null;
+}
+
+function deleteEventFromDetail() {
+  if (!detailId) return;
+  events = events.filter(e => e.id !== detailId);
+  persist();
+  closeDetail();
+  renderCurrentView();
+}
+
+function editEventFromDetail() {
+  if (!detailId) return;
+  openEditModal(detailId);
+}
+
+document.getElementById('event-modal').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
+document.getElementById('detail-modal').addEventListener('click', function(e){
+  if (e.target === this) closeDetail();
+});
+
+/* ══════════════════════════
+   DIARY
+══════════════════════════ */
+function renderDiary() {
+  const k = fmt(TODAY);
+  document.getElementById('diary-date-label').textContent = dayLabel(k);
+  document.getElementById('diary-text').value = (diaries[k]||{}).text || '';
+  const keys = Object.keys(diaries).sort().reverse().slice(0, 7);
+  document.getElementById('diary-list').innerHTML = keys.length
+    ? keys.map(k => `<div class="entry-card"><div class="entry-date">${dayLabel(k)}</div><div class="entry-preview">${diaries[k].text}</div></div>`).join('')
+    : `<p class="empty-msg">まだ日記がありません</p>`;
+}
+
+function saveDiary() {
+  const text = document.getElementById('diary-text').value.trim();
+  if (!text) return;
+  diaries[fmt(TODAY)] = { text, saved: new Date().toISOString() };
+  persist();
+  renderDiary();
+  const btn = document.getElementById('diary-btn');
+  btn.textContent = '保存しました ✓';
+  setTimeout(() => btn.textContent = '保存する', 1600);
+}
+
+/* ══════════════════════════
+   MEMO
+══════════════════════════ */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderMemos() {
+  document.getElementById('memo-list').innerHTML = memos.length
+    ? memos.map((m, i) => {
+        const checks = m.checks || [];
+        const todo = checks.filter(c => !c.done);
+        const done = checks.filter(c =>  c.done);
+
+        const checkItem = (c, ci) =>
+          `<div class="memo-check-item${c.done ? ' done' : ''}" onclick="toggleCheck(${i},${ci})">
+            <div class="ci-box"></div>
+            <span class="ci-label">${escHtml(c.text)}</span>
+          </div>`;
+
+        const todoHtml = todo.length
+          ? `<div class="check-group">
+               <div class="check-group-label">未完了 <span>${todo.length}</span></div>
+               <div class="memo-checklist">${checks.map((c,ci) => c.done ? '' : checkItem(c,ci)).join('')}</div>
+             </div>` : '';
+
+        const doneHtml = done.length
+          ? `<div class="check-group">
+               <div class="check-group-label done-label">完了済 <span>${done.length}</span></div>
+               <div class="memo-checklist">${checks.map((c,ci) => c.done ? checkItem(c,ci) : '').join('')}</div>
+             </div>` : '';
+
+        return `<div class="memo-card">
+          <div class="memo-card-top">
+            <div class="memo-card-title">${escHtml(m.title||'無題')}</div>
+            <button class="memo-card-del" onclick="delMemo(${i})"><i class="ti ti-trash"></i></button>
+          </div>
+          ${m.body ? `<div class="memo-card-body">${escHtml(m.body)}</div>` : ''}
+          ${todoHtml}${doneHtml}
+          <div class="check-add-row" style="margin-top:8px">
+            <input class="check-add-input" type="text" placeholder="項目を追加…"
+              onkeydown="if(event.key==='Enter'){addCheckToMemo(${i},this);event.preventDefault();}">
+            <button class="check-add-btn" onclick="addCheckToMemo(${i},this.previousElementSibling)"><i class="ti ti-plus"></i></button>
+          </div>
+          <div class="memo-card-time">${new Date(m.saved).toLocaleDateString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>`;
+      }).join('')
+    : `<p class="empty-msg">メモがありません<br>右上の「新規」から追加できます</p>`;
+}
+
+function addCheckToMemo(i, input) {
+  const text = input.value.trim();
+  if (!text) return;
+  if (!memos[i].checks) memos[i].checks = [];
+  memos[i].checks.push({ text, done: false });
+  persist();
+  renderMemos();
+}
+
+function toggleCheck(memoIdx, checkIdx) {
+  memos[memoIdx].checks[checkIdx].done = !memos[memoIdx].checks[checkIdx].done;
+  persist();
+  renderMemos();
+}
+
+function toggleMemoForm() {
+  const form = document.getElementById('memo-form');
+  const opening = !form.classList.contains('open');
+  form.classList.toggle('open');
+  if (opening) {
+    document.getElementById('memo-title-in').value = '';
+    document.getElementById('memo-body-in').value = '';
+  }
+}
+
+function saveMemo() {
+  const t = document.getElementById('memo-title-in').value.trim();
+  const b = document.getElementById('memo-body-in').value.trim();
+  if (!t && !b) return;
+  memos.unshift({ title:t, body:b, checks:[], saved: new Date().toISOString() });
+  persist();
+  toggleMemoForm();
+  renderMemos();
+}
+
+function delMemo(i) {
+  if (confirm('このメモを削除しますか？')) { memos.splice(i,1); persist(); renderMemos(); }
+}
+
+/* ══════════════════════════
+   INIT
+══════════════════════════ */
+document.getElementById('header-date').textContent =
+  TODAY.toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'});
+
+setInterval(() => {
+  if (currentView === 'week' || currentView === 'day') renderCurrentView();
+}, 60000);
+
+initNotifications();
+setView('month');
+</script>
+</body>
+</html>
