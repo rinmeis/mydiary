@@ -129,10 +129,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .day-now-time{font-size:10px;color:var(--red);font-weight:500;padding:0 4px;white-space:nowrap}
 
 /* ══ EVENT MODAL ══ */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;touch-action:none}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:430px;box-sizing:border-box;transform:translateY(20px);transition:transform .2s;max-height:92vh;overflow:hidden}
-.modal-sheet-inner{padding:20px 16px 36px;overflow-y:auto;overflow-x:hidden;max-height:92vh}
+.modal-sheet-inner{padding:20px 16px 36px;overflow-y:auto;overflow-x:hidden;max-height:92vh;overscroll-behavior:contain}
 .modal-overlay.open .modal-sheet{transform:translateY(0)}
 .modal-title{font-size:16px;font-weight:500;margin-bottom:16px}
 .form-row{margin-bottom:12px}
@@ -141,12 +141,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .form-input:focus{border-color:var(--text)}
 .form-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;box-sizing:border-box}
 .form-select:focus{border-color:var(--text)}
-.evt-time-row{display:flex;align-items:flex-end;gap:6px}
-.time-field{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.evt-time-row{display:grid;grid-template-columns:1fr 20px 1fr;align-items:end;gap:4px}
+.time-field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .time-field-label{font-size:11px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:3px}
 .time-field-label i{font-size:12px}
-.time-sep{font-size:14px;color:var(--text3);padding-bottom:10px;flex-shrink:0}
-.time-field .form-input{padding:9px 6px;font-size:13px}
+.time-sep{font-size:15px;color:var(--text3);text-align:center;padding-bottom:9px;line-height:1}
+.time-field .form-input{padding:9px 6px;font-size:13px;box-sizing:border-box}
 .color-row{display:flex;gap:8px;flex-wrap:wrap}
 .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
 .color-swatch.selected{border-color:var(--text);transform:scale(1.15)}
@@ -224,7 +224,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .memo-check-item .ci-box{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .memo-check-item.done .ci-box{background:var(--text);border-color:var(--text)}
 .memo-check-item.done .ci-box::after{content:'';width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block}
-.memo-check-item .ci-label{font-size:13px;color:var(--text2);line-height:1.4;transition:all .15s}
+.memo-check-item .ci-label{font-size:13px;color:var(--text2);line-height:1.4;transition:all .15s;word-break:break-all;flex:1}
 .memo-check-item.done .ci-label{text-decoration:line-through;color:var(--text3)}
 </style>
 </head>
@@ -435,7 +435,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.0.4';
+const VERSION = 'ver.1.0.5';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -717,7 +717,7 @@ function renderTodayPanel() {
   }
   const items = todayEvts.map(e => {
     const timeStr = e.start ? e.start + (e.end ? ' 〜 ' + e.end : '') : '終日';
-    return `<div class="today-evt-item" onclick="onMonthDayClick('${todayStr}')">
+    return `<div class="today-evt-item" onclick="showDetail('${e.id}','${todayStr}')">
       <div class="today-evt-dot" style="background:${e.color}"></div>
       <div class="today-evt-info">
         <div class="today-evt-title">${escHtml(e.title)}</div>
@@ -1021,6 +1021,7 @@ function openAddModal(dateStr, timeStr) {
   document.getElementById('modal-actions').innerHTML =
     `<button class="btn-cancel" onclick="closeModal()">キャンセル</button>
      <button class="btn-save" onclick="saveEvent()">保存</button>`;
+  lockScroll();
   document.getElementById('event-modal').classList.add('open');
 }
 
@@ -1044,11 +1045,16 @@ function openEditModal(id) {
     `<button class="btn-cancel" onclick="closeModal()">キャンセル</button>
      <button class="btn-save" onclick="saveEvent()">保存</button>`;
   closeDetail();
+  lockScroll();
   document.getElementById('event-modal').classList.add('open');
 }
 
+function lockScroll()   { document.body.style.overflow = 'hidden'; }
+function unlockScroll() { document.body.style.overflow = ''; }
+
 function closeModal() {
   document.getElementById('event-modal').classList.remove('open');
+  unlockScroll();
 }
 
 function saveEvent() {
@@ -1113,11 +1119,13 @@ function showDetail(id, dateStr) {
     reminderWrap.innerHTML = '';
   }
 
+  lockScroll();
   document.getElementById('detail-modal').classList.add('open');
 }
 
 function closeDetail() {
   document.getElementById('detail-modal').classList.remove('open');
+  unlockScroll();
   detailId = null;
   detailDateStr = null;
 }
