@@ -275,6 +275,44 @@ input,select,textarea{
 .memo-check-item.done .ci-box::after{content:'';width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block}
 .memo-check-item .ci-label{font-size:13px;color:var(--text2);line-height:1.4;transition:all .15s;word-break:break-all;flex:1}
 .memo-check-item.done .ci-label{text-decoration:line-through;color:var(--text3)}
+
+/* ══ HEADER ICONS ══ */
+.header-icon-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:20px;padding:5px;display:flex;align-items:center;border-radius:8px;min-width:32px;min-height:32px;justify-content:center}
+.header-icon-btn:active{background:var(--bg2)}
+
+/* ══ TODAY BTN ══ */
+.today-btn{padding:4px 10px;border:0.5px solid var(--border2);border-radius:8px;background:none;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.today-btn:active{background:var(--bg2)}
+
+/* ══ DIARY MARKER ══ */
+.diary-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin:1px auto 0}
+
+/* ══ MEMO EDIT BTN ══ */
+.memo-card-edit{background:none;border:none;color:var(--text3);cursor:pointer;padding:0 4px 0 0;font-size:16px;display:flex;align-items:center;min-width:24px;min-height:24px;justify-content:center}
+
+/* ══ SEARCH OVERLAY ══ */
+.search-overlay{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s;padding-top:var(--safe-top)}
+.search-overlay.open{transform:translateY(0)}
+.search-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:0.5px solid var(--border)}
+.search-input-wrap{flex:1;display:flex;align-items:center;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--r);padding:0 10px;gap:6px}
+.search-input-wrap i{color:var(--text3);font-size:16px;flex-shrink:0}
+.search-input{flex:1;border:none;background:none;padding:8px 0;font-size:16px;font-family:inherit;color:var(--text);outline:none}
+.search-close-btn{padding:7px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.search-close-btn:active{background:var(--bg2)}
+.search-results{flex:1;overflow-y:auto;padding:8px 16px 32px;-webkit-overflow-scrolling:touch}
+.search-section-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin:14px 0 6px}
+.search-item{padding:10px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.search-item:active{opacity:.7}
+.search-item-title{font-size:13px;font-weight:500;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.search-item-sub{font-size:11px;color:var(--text2);line-height:1.4}
+.search-empty{text-align:center;color:var(--text3);font-size:13px;padding:48px 0}
+
+/* ══ SETTINGS MODAL ══ */
+.settings-section{margin-bottom:18px}
+.settings-section-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}
+.settings-btn{width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:10px;margin-bottom:8px;-webkit-tap-highlight-color:transparent}
+.settings-btn:active{background:var(--bg2)}
+.settings-btn i{font-size:18px;color:var(--text2);flex-shrink:0}
 </style>
 </head>
 <body>
@@ -283,9 +321,13 @@ input,select,textarea{
   <!-- Header -->
   <div class="header">
     <h1 id="header-title">カレンダー</h1>
-    <div style="text-align:right">
-      <span class="header-date" id="header-date"></span>
-      <span class="header-ver" id="header-ver"></span>
+    <div style="display:flex;align-items:center;gap:2px">
+      <button class="header-icon-btn" onclick="openSearch()" title="検索"><i class="ti ti-search"></i></button>
+      <button class="header-icon-btn" onclick="openSettings()" title="設定"><i class="ti ti-settings"></i></button>
+      <div style="text-align:right;margin-left:4px">
+        <span class="header-date" id="header-date"></span>
+        <span class="header-ver" id="header-ver"></span>
+      </div>
     </div>
   </div>
 
@@ -317,7 +359,10 @@ input,select,textarea{
       </div>
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="navBack()"><i class="ti ti-chevron-left"></i></button>
-        <span class="cal-nav-label" id="cal-nav-label" onclick="openDateJumper()" style="cursor:pointer" title="日付を選択"><i class="ti ti-chevron-down"></i></span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="cal-nav-label" id="cal-nav-label" onclick="openDateJumper()" style="cursor:pointer" title="日付を選択"><i class="ti ti-chevron-down"></i></span>
+          <button class="today-btn" onclick="jumpToToday()">今日</button>
+        </div>
         <button class="cal-nav-btn" onclick="navFwd()"><i class="ti ti-chevron-right"></i></button>
       </div>
 
@@ -481,6 +526,53 @@ input,select,textarea{
   </div>
 </div>
 
+<!-- ══ SEARCH OVERLAY ══ -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-header">
+    <div class="search-input-wrap">
+      <i class="ti ti-search"></i>
+      <input class="search-input" type="text" id="search-input" placeholder="予定・日記・メモを検索…" oninput="onSearchInput()" autocomplete="off">
+    </div>
+    <button class="search-close-btn" onclick="closeSearch()">閉じる</button>
+  </div>
+  <div class="search-results" id="search-results">
+    <div class="search-empty">キーワードを入力してください</div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-sheet">
+    <div class="modal-sheet-inner">
+      <div class="modal-title">設定</div>
+      <div class="settings-section">
+        <div class="settings-section-title">データ管理</div>
+        <button class="settings-btn" onclick="exportData()"><i class="ti ti-download"></i>データをエクスポート（JSON）</button>
+        <button class="settings-btn" onclick="document.getElementById('import-file').click()"><i class="ti ti-upload"></i>データをインポート（JSON）</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
+      </div>
+      <div class="modal-actions" style="margin-top:4px">
+        <button class="btn-cancel" onclick="closeSettings()">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEMO EDIT MODAL ══ -->
+<div class="modal-overlay" id="memo-edit-modal">
+  <div class="modal-sheet">
+    <div class="modal-sheet-inner">
+      <div class="modal-title">メモを編集</div>
+      <input class="memo-input" type="text" id="memo-edit-title" placeholder="タイトル" style="margin-bottom:8px;display:block;width:100%;box-sizing:border-box">
+      <textarea class="memo-input diary-textarea" id="memo-edit-body" rows="5" placeholder="メモの内容" style="margin-bottom:0;display:block;width:100%;box-sizing:border-box"></textarea>
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="btn-cancel" onclick="closeMemoEdit()">キャンセル</button>
+        <button class="btn-save" onclick="saveMemoEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DIARY EDIT MODAL ══ -->
 <div class="modal-overlay" id="diary-edit-modal">
   <div class="modal-sheet">
@@ -499,7 +591,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.3.1';
+const VERSION = 'ver.1.4.0';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -799,9 +891,10 @@ function monthCell(d, k, other, extra='') {
     return `<div class="evt-pill" style="background:${e.color}">${truncated}</div>`;
   }).join('');
   const moreDot = evts.length > 2 ? `<div style="font-size:9px;color:var(--text3);text-align:center">…</div>` : '';
+  const diaryMark = diaries[k] ? `<div class="diary-dot"></div>` : '';
   const cls = ['cal-cell', other?'other':'', extra].filter(Boolean).join(' ');
   return `<div class="${cls}" onclick="onMonthDayClick('${k}')">
-    <div class="dnum">${d}</div>${pills}${moreDot}
+    <div class="dnum">${d}</div>${pills}${moreDot}${diaryMark}
   </div>`;
 }
 
@@ -1216,6 +1309,152 @@ document.getElementById('detail-modal').addEventListener('click', function(e){
 document.getElementById('diary-edit-modal').addEventListener('click', function(e){
   if (e.target === this) closeDiaryEdit();
 });
+document.getElementById('settings-modal').addEventListener('click', function(e){
+  if (e.target === this) closeSettings();
+});
+document.getElementById('memo-edit-modal').addEventListener('click', function(e){
+  if (e.target === this) closeMemoEdit();
+});
+
+/* ══════════════════════════
+   SEARCH
+══════════════════════════ */
+function openSearch() {
+  document.getElementById('search-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('search-input').focus(), 250);
+}
+
+function closeSearch() {
+  document.getElementById('search-overlay').classList.remove('open');
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').innerHTML = '<div class="search-empty">キーワードを入力してください</div>';
+}
+
+function onSearchInput() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const res = document.getElementById('search-results');
+  if (!q) {
+    res.innerHTML = '<div class="search-empty">キーワードを入力してください</div>';
+    return;
+  }
+  const evtResults = events.filter(e =>
+    e.title.toLowerCase().includes(q) || (e.note||'').toLowerCase().includes(q)
+  );
+  const diaryResults = Object.entries(diaries).filter(([,v]) =>
+    v.text.toLowerCase().includes(q)
+  ).sort((a,b) => b[0].localeCompare(a[0]));
+  const memoResults = memos.map((m,i) => ({m,i})).filter(({m}) =>
+    (m.title||'').toLowerCase().includes(q) ||
+    (m.body||'').toLowerCase().includes(q) ||
+    (m.checks||[]).some(c => c.text.toLowerCase().includes(q))
+  );
+  if (!evtResults.length && !diaryResults.length && !memoResults.length) {
+    res.innerHTML = `<div class="search-empty">「${escHtml(q)}」に一致する結果はありません</div>`;
+    return;
+  }
+  let html = '';
+  if (evtResults.length) {
+    html += `<div class="search-section-title">予定 (${evtResults.length}件)</div>`;
+    html += evtResults.map(e => `
+      <div class="search-item" onclick="closeSearch();calCursor=parseDateStr('${e.date}');setView('day');setTimeout(()=>showDetail('${e.id}','${e.date}'),100)">
+        <div class="search-item-title"><span style="width:8px;height:8px;border-radius:50%;background:${e.color};flex-shrink:0;display:inline-block"></span>${escHtml(e.title)}</div>
+        <div class="search-item-sub">${dayLabel(e.date)}${e.start?' '+e.start:''}</div>
+      </div>`).join('');
+  }
+  if (diaryResults.length) {
+    html += `<div class="search-section-title">日記 (${diaryResults.length}件)</div>`;
+    html += diaryResults.map(([k,v]) => `
+      <div class="search-item" onclick="closeSearch();switchTab('diary')">
+        <div class="search-item-title">${dayLabel(k)}</div>
+        <div class="search-item-sub">${escHtml(v.text.slice(0,60))}${v.text.length>60?'…':''}</div>
+      </div>`).join('');
+  }
+  if (memoResults.length) {
+    html += `<div class="search-section-title">メモ (${memoResults.length}件)</div>`;
+    html += memoResults.map(({m}) => `
+      <div class="search-item" onclick="closeSearch();switchTab('memo')">
+        <div class="search-item-title">${escHtml(m.title||'無題')}</div>
+        ${m.body?`<div class="search-item-sub">${escHtml(m.body.slice(0,60))}${m.body.length>60?'…':''}</div>`:''}
+      </div>`).join('');
+  }
+  res.innerHTML = html;
+}
+
+/* ══════════════════════════
+   SETTINGS / EXPORT / IMPORT
+══════════════════════════ */
+function openSettings() {
+  lockScroll();
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+  unlockScroll();
+}
+
+function exportData() {
+  const data = { events, diaries, memos, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mydiary-backup-' + fmt(new Date()) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm('現在のデータを上書きしてインポートしますか？\n※この操作は元に戻せません')) return;
+      if (Array.isArray(data.events))  events  = data.events;
+      if (data.diaries && typeof data.diaries === 'object') diaries = data.diaries;
+      if (Array.isArray(data.memos))   memos   = data.memos;
+      persist();
+      renderCurrentView();
+      closeSettings();
+      alert('インポートが完了しました');
+    } catch(err) {
+      alert('ファイルの読み込みに失敗しました。正しいバックアップファイルか確認してください。');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+/* ══════════════════════════
+   MEMO EDIT
+══════════════════════════ */
+let memoEditIdx = null;
+
+function openMemoEdit(i) {
+  memoEditIdx = i;
+  document.getElementById('memo-edit-title').value = memos[i].title || '';
+  document.getElementById('memo-edit-body').value = memos[i].body || '';
+  lockScroll();
+  document.getElementById('memo-edit-modal').classList.add('open');
+}
+
+function closeMemoEdit() {
+  document.getElementById('memo-edit-modal').classList.remove('open');
+  unlockScroll();
+  memoEditIdx = null;
+}
+
+function saveMemoEdit() {
+  const t = document.getElementById('memo-edit-title').value.trim();
+  const b = document.getElementById('memo-edit-body').value.trim();
+  memos[memoEditIdx].title = t || memos[memoEditIdx].title;
+  memos[memoEditIdx].body  = b;
+  persist();
+  closeMemoEdit();
+  renderMemos();
+}
 
 /* ══════════════════════════
    DIARY
@@ -1313,6 +1552,7 @@ function memoCard(m, i) {
       <button class="memo-done-btn${m.done?' done':''}" onclick="toggleMemoDone(${i})" title="${m.done?'未完了に戻す':'完了にする'}">
         <i class="ti ti-check"></i></button>
       <div class="memo-card-title" style="flex:1;margin:0 8px">${escHtml(m.title||'無題')}</div>
+      <button class="memo-card-edit" onclick="openMemoEdit(${i})"><i class="ti ti-edit"></i></button>
       <button class="memo-card-del" onclick="delMemo(${i})"><i class="ti ti-trash"></i></button>
     </div>
     ${m.body?`<div class="memo-card-body">${escHtml(m.body)}</div>`:''}
