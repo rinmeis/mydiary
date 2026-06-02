@@ -141,12 +141,18 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .form-input:focus{border-color:var(--text)}
 .form-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;box-sizing:border-box}
 .form-select:focus{border-color:var(--text)}
-.evt-time-row{display:grid;grid-template-columns:1fr 20px 1fr;align-items:end;gap:4px}
-.time-field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.time-field-label{font-size:11px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:3px}
-.time-field-label i{font-size:12px}
-.time-sep{font-size:15px;color:var(--text3);text-align:center;padding-bottom:9px;line-height:1}
-.time-field .form-input{padding:9px 6px;font-size:13px;box-sizing:border-box}
+.evt-time-grid{display:grid;grid-template-columns:1fr 28px 1fr;grid-template-rows:auto auto;column-gap:0;row-gap:4px}
+.evt-time-grid .tfl{font-size:11px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:3px}
+.evt-time-grid .tfl i{font-size:12px}
+.evt-time-grid .time-sep{display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text3);padding-top:20px}
+.evt-time-grid .form-input{width:100%;box-sizing:border-box;padding:9px 8px;font-size:13px}
+/* memo done */
+.memo-section-label{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.05em;padding:10px 0 6px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.memo-section-label.done-label{color:var(--green)}
+.memo-done-btn{background:none;border:1.5px solid var(--border2);border-radius:50%;width:22px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-left:auto}
+.memo-done-btn.done{background:var(--green);border-color:var(--green)}
+.memo-done-btn i{font-size:12px;color:var(--text3)}
+.memo-done-btn.done i{color:#fff}
 .color-row{display:flex;gap:8px;flex-wrap:wrap}
 .color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
 .color-swatch.selected{border-color:var(--text);transform:scale(1.15)}
@@ -203,6 +209,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 .btn-c{background:none;border:0.5px solid var(--border2);color:var(--text2)}
 .btn-o{background:var(--text);border:none;color:#fff;font-weight:500}
 .memo-card{background:var(--bg2);border-radius:var(--r);padding:12px 13px;margin-bottom:8px}
+.memo-card-done{opacity:.65}
 .memo-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
 .memo-card-title{font-size:14px;font-weight:500;flex:1;line-height:1.4}
 .memo-card-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:0 0 0 8px;font-size:16px}
@@ -363,16 +370,13 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
       </div>
       <div class="form-row">
         <label class="form-label">時間（任意）</label>
-        <div class="evt-time-row">
-          <div class="time-field">
-            <span class="time-field-label"><i class="ti ti-clock"></i>開始時刻</span>
-            <input class="form-input" type="time" id="evt-start">
-          </div>
-          <div class="time-sep">〜</div>
-          <div class="time-field">
-            <span class="time-field-label"><i class="ti ti-clock-off"></i>終了時刻</span>
-            <input class="form-input" type="time" id="evt-end">
-          </div>
+        <div class="evt-time-grid">
+          <span class="tfl"><i class="ti ti-clock"></i>開始時刻</span>
+          <span></span>
+          <span class="tfl"><i class="ti ti-clock-off"></i>終了時刻</span>
+          <input class="form-input" type="time" id="evt-start">
+          <span class="time-sep">〜</span>
+          <input class="form-input" type="time" id="evt-end">
         </div>
       </div>
       <div class="form-row">
@@ -435,7 +439,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--tex
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.0.5';
+const VERSION = 'ver.1.1.0';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1181,47 +1185,59 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function memoCard(m, i) {
+  const checks = m.checks || [];
+  const todo = checks.filter(c => !c.done);
+  const done = checks.filter(c =>  c.done);
+  const checkItem = (c, ci) =>
+    `<div class="memo-check-item${c.done?' done':''}" onclick="toggleCheck(${i},${ci})">
+      <div class="ci-box"></div><span class="ci-label">${escHtml(c.text)}</span>
+    </div>`;
+  const todoHtml = todo.length
+    ? `<div class="check-group"><div class="check-group-label">未完了 <span>${todo.length}</span></div>
+         <div class="memo-checklist">${checks.map((c,ci)=>c.done?'':checkItem(c,ci)).join('')}</div></div>` : '';
+  const doneCheckHtml = done.length
+    ? `<div class="check-group"><div class="check-group-label done-label">完了済 <span>${done.length}</span></div>
+         <div class="memo-checklist">${checks.map((c,ci)=>c.done?checkItem(c,ci):'').join('')}</div></div>` : '';
+  return `<div class="memo-card${m.done?' memo-card-done':''}">
+    <div class="memo-card-top">
+      <button class="memo-done-btn${m.done?' done':''}" onclick="toggleMemoDone(${i})" title="${m.done?'未完了に戻す':'完了にする'}">
+        <i class="ti ti-check"></i></button>
+      <div class="memo-card-title" style="flex:1;margin:0 8px">${escHtml(m.title||'無題')}</div>
+      <button class="memo-card-del" onclick="delMemo(${i})"><i class="ti ti-trash"></i></button>
+    </div>
+    ${m.body?`<div class="memo-card-body">${escHtml(m.body)}</div>`:''}
+    ${todoHtml}${doneCheckHtml}
+    <div class="check-add-row" style="margin-top:8px">
+      <input class="check-add-input" type="text" placeholder="項目を追加…"
+        onkeydown="if(event.key==='Enter'){addCheckToMemo(${i},this);event.preventDefault();}">
+      <button class="check-add-btn" onclick="addCheckToMemo(${i},this.previousElementSibling)"><i class="ti ti-plus"></i></button>
+    </div>
+    <div class="memo-card-time">${new Date(m.saved).toLocaleDateString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+  </div>`;
+}
+
 function renderMemos() {
-  document.getElementById('memo-list').innerHTML = memos.length
-    ? memos.map((m, i) => {
-        const checks = m.checks || [];
-        const todo = checks.filter(c => !c.done);
-        const done = checks.filter(c =>  c.done);
+  if (!memos.length) {
+    document.getElementById('memo-list').innerHTML =
+      `<p class="empty-msg">メモがありません<br>右上の「新規」から追加できます</p>`;
+    return;
+  }
+  const active = memos.map((m,i)=>({m,i})).filter(x=>!x.m.done);
+  const done   = memos.map((m,i)=>({m,i})).filter(x=> x.m.done);
+  let html = '';
+  if (active.length) html += active.map(x=>memoCard(x.m,x.i)).join('');
+  if (done.length) {
+    html += `<div class="memo-section-label done-label"><i class="ti ti-circle-check"></i>完了済 (${done.length})</div>`;
+    html += done.map(x=>memoCard(x.m,x.i)).join('');
+  }
+  document.getElementById('memo-list').innerHTML = html;
+}
 
-        const checkItem = (c, ci) =>
-          `<div class="memo-check-item${c.done ? ' done' : ''}" onclick="toggleCheck(${i},${ci})">
-            <div class="ci-box"></div>
-            <span class="ci-label">${escHtml(c.text)}</span>
-          </div>`;
-
-        const todoHtml = todo.length
-          ? `<div class="check-group">
-               <div class="check-group-label">未完了 <span>${todo.length}</span></div>
-               <div class="memo-checklist">${checks.map((c,ci) => c.done ? '' : checkItem(c,ci)).join('')}</div>
-             </div>` : '';
-
-        const doneHtml = done.length
-          ? `<div class="check-group">
-               <div class="check-group-label done-label">完了済 <span>${done.length}</span></div>
-               <div class="memo-checklist">${checks.map((c,ci) => c.done ? checkItem(c,ci) : '').join('')}</div>
-             </div>` : '';
-
-        return `<div class="memo-card">
-          <div class="memo-card-top">
-            <div class="memo-card-title">${escHtml(m.title||'無題')}</div>
-            <button class="memo-card-del" onclick="delMemo(${i})"><i class="ti ti-trash"></i></button>
-          </div>
-          ${m.body ? `<div class="memo-card-body">${escHtml(m.body)}</div>` : ''}
-          ${todoHtml}${doneHtml}
-          <div class="check-add-row" style="margin-top:8px">
-            <input class="check-add-input" type="text" placeholder="項目を追加…"
-              onkeydown="if(event.key==='Enter'){addCheckToMemo(${i},this);event.preventDefault();}">
-            <button class="check-add-btn" onclick="addCheckToMemo(${i},this.previousElementSibling)"><i class="ti ti-plus"></i></button>
-          </div>
-          <div class="memo-card-time">${new Date(m.saved).toLocaleDateString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-        </div>`;
-      }).join('')
-    : `<p class="empty-msg">メモがありません<br>右上の「新規」から追加できます</p>`;
+function toggleMemoDone(i) {
+  memos[i].done = !memos[i].done;
+  persist();
+  renderMemos();
 }
 
 function addCheckToMemo(i, input) {
@@ -1253,7 +1269,7 @@ function saveMemo() {
   const t = document.getElementById('memo-title-in').value.trim();
   const b = document.getElementById('memo-body-in').value.trim();
   if (!t && !b) return;
-  memos.unshift({ title:t, body:b, checks:[], saved: new Date().toISOString() });
+  memos.unshift({ title:t, body:b, checks:[], done:false, saved: new Date().toISOString() });
   persist();
   toggleMemoForm();
   renderMemos();
