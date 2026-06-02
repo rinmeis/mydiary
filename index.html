@@ -259,7 +259,7 @@ input,select,textarea{
 .memo-card-time{font-size:11px;color:var(--text3);margin-top:6px}
 /* checklist */
 .check-add-row{display:flex;gap:6px}
-.check-add-input{flex:1;border:0.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+.check-add-input{flex:1;border:0.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;resize:none;overflow:hidden;line-height:1.4;min-height:34px;display:block}
 .check-add-input:focus{border-color:var(--text)}
 .check-add-btn{padding:7px 12px;border:0.5px solid var(--border2);border-radius:8px;background:none;color:var(--text);font-size:18px;cursor:pointer;line-height:1;display:flex;align-items:center}
 .check-add-btn:active{background:var(--bg2)}
@@ -499,7 +499,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.3.0';
+const VERSION = 'ver.1.3.1';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1318,8 +1318,9 @@ function memoCard(m, i) {
     ${m.body?`<div class="memo-card-body">${escHtml(m.body)}</div>`:''}
     ${todoHtml}${doneCheckHtml}
     <div class="check-add-row" style="margin-top:8px">
-      <input class="check-add-input" type="text" placeholder="項目を追加…"
-        onkeydown="if(event.key==='Enter'){addCheckToMemo(${i},this);event.preventDefault();}">
+      <textarea class="check-add-input" rows="1" placeholder="項目を追加…"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){addCheckToMemo(${i},this);event.preventDefault();}"></textarea>
       <button class="check-add-btn" onclick="addCheckToMemo(${i},this.previousElementSibling)"><i class="ti ti-plus"></i></button>
     </div>
     <div class="memo-card-time">${new Date(m.saved).toLocaleDateString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
