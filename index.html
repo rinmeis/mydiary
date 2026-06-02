@@ -587,7 +587,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.4.1';
+const VERSION = 'ver.1.5.0';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1652,6 +1652,29 @@ setInterval(() => {
 
 initNotifications();
 setView('month');
+
+/* ══════════════════════════
+   SWIPE NAVIGATION
+══════════════════════════ */
+(function() {
+  let startX = 0, startY = 0;
+  const THRESHOLD = 50;
+  const calWrap = document.querySelector('.cal-wrap');
+
+  calWrap.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  calWrap.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < THRESHOLD) return;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0) navFwd();
+    else navBack();
+  }, { passive: true });
+})();
 </script>
 </body>
 </html>
