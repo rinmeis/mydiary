@@ -514,7 +514,7 @@ input,select,textarea{
       </div>
       <div class="form-row">
         <label class="form-label">メモ（任意）</label>
-        <textarea class="form-input diary-textarea" id="evt-note" rows="2" placeholder="詳細メモ"></textarea>
+        <textarea class="form-input diary-textarea" id="evt-note" rows="1" placeholder="詳細メモ" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="overflow:hidden;min-height:38px;line-height:1.5;resize:none"></textarea>
       </div>
       <div class="form-row">
         <label class="form-label">カラー</label>
@@ -609,7 +609,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.6.0';
+const VERSION = 'ver.1.6.1';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1229,9 +1229,12 @@ function openAddModal(dateStr, timeStr) {
   editingId = null;
   document.getElementById('modal-title-text').textContent = '予定を追加';
   document.getElementById('evt-title').value = '';
-  document.getElementById('evt-date').value = dateStr || fmt(calCursor);
-  document.getElementById('evt-date-end').value = '';
-  document.getElementById('evt-note').value = '';
+  const defaultDate = dateStr || fmt(calCursor);
+  document.getElementById('evt-date').value     = defaultDate;
+  document.getElementById('evt-date-end').value = defaultDate;
+  const noteEl = document.getElementById('evt-note');
+  noteEl.value = '';
+  noteEl.style.height = '';
   document.getElementById('evt-recur').value = 'none';
   document.getElementById('evt-recur-end').value = '';
   document.getElementById('evt-reminder').value = 'none';
@@ -1247,6 +1250,10 @@ function openAddModal(dateStr, timeStr) {
      <button class="btn-save" onclick="saveEvent()">保存</button>`;
   lockScroll();
   document.getElementById('event-modal').classList.add('open');
+  setTimeout(() => {
+    const inner = document.querySelector('#event-modal .modal-sheet-inner');
+    if (inner) inner.scrollTop = 0;
+  }, 30);
 }
 
 function openEditModal(id) {
@@ -1257,7 +1264,10 @@ function openEditModal(id) {
   document.getElementById('evt-title').value = evt.title;
   document.getElementById('evt-date').value = evt.date;
   document.getElementById('evt-date-end').value = evt.dateEnd || '';
-  document.getElementById('evt-note').value = evt.note || '';
+  const noteEl2 = document.getElementById('evt-note');
+  noteEl2.value = evt.note || '';
+  noteEl2.style.height = '';
+  if (evt.note) { noteEl2.style.height = noteEl2.scrollHeight + 'px'; }
   document.getElementById('evt-recur').value = evt.recur || 'none';
   document.getElementById('evt-recur-end').value = evt.recurEnd || '';
   document.getElementById('evt-reminder').value = evt.reminder || 'none';
@@ -1276,6 +1286,10 @@ function openEditModal(id) {
   closeDetail();
   lockScroll();
   document.getElementById('event-modal').classList.add('open');
+  setTimeout(() => {
+    const inner = document.querySelector('#event-modal .modal-sheet-inner');
+    if (inner) inner.scrollTop = 0;
+  }, 30);
 }
 
 function lockScroll()   { document.body.style.overflow = 'hidden'; }
