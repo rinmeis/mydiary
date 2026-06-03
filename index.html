@@ -301,6 +301,18 @@ input,select,textarea{
 .search-item-sub{font-size:11px;color:var(--text2);line-height:1.4}
 .search-empty{text-align:center;color:var(--text3);font-size:13px;padding:32px 0}
 
+/* ══ TOGGLE SWITCH ══ */
+.toggle-row{display:flex;align-items:center;justify-content:space-between}
+.toggle-switch{width:46px;height:26px;border-radius:13px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.toggle-switch.on{background:var(--text)}
+.toggle-thumb{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none}
+.toggle-switch.on .toggle-thumb{transform:translateX(20px)}
+
+/* ══ DATE PAIR ══ */
+.date-pair{display:flex;align-items:center;gap:6px}
+.date-pair .form-input{flex:1;min-width:0}
+.date-pair-sep{color:var(--text3);font-size:13px;flex-shrink:0}
+
 /* ══ SETTINGS MODAL ══ */
 .settings-section{margin-bottom:18px}
 .settings-section-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}
@@ -447,10 +459,20 @@ input,select,textarea{
       </div>
       <div class="form-row">
         <label class="form-label">日付</label>
-        <input class="form-input" type="date" id="evt-date">
+        <div class="date-pair">
+          <input class="form-input" type="date" id="evt-date">
+          <span class="date-pair-sep">〜</span>
+          <input class="form-input" type="date" id="evt-date-end" placeholder="終了日（任意）">
+        </div>
       </div>
       <div class="form-row">
-        <label class="form-label">時間（任意）</label>
+        <div class="toggle-row">
+          <label class="form-label" style="margin-bottom:0">終日</label>
+          <div class="toggle-switch" id="allday-toggle" onclick="toggleAllDay()"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <div class="form-row" id="time-row">
+        <label class="form-label">時間</label>
         <div class="time-pair">
           <div class="time-pair-labels">
             <div class="time-pair-label"><i class="ti ti-clock"></i>開始時刻</div>
@@ -587,7 +609,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.5.0';
+const VERSION = 'ver.1.6.0';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -674,7 +696,11 @@ function matchesRecurrence(evt, dateStr) {
 }
 
 function eventsOn(dateStr) {
-  return events.filter(e => e.date === dateStr || matchesRecurrence(e, dateStr))
+  return events.filter(e => {
+    if (e.date === dateStr) return true;
+    if (e.dateEnd && dateStr > e.date && dateStr <= e.dateEnd) return true;
+    return matchesRecurrence(e, dateStr);
+  })
     .sort((a,b) => {
       if (!a.start && !b.start) return 0;
       if (!a.start) return -1;
@@ -1146,6 +1172,39 @@ function computeColumns(evts) {
 ══════════════════════════ */
 let editingId = null;
 let selectedColor = EVENT_COLORS[4].hex;
+let isAllDay = false;
+
+function defaultTimes(timeStr) {
+  if (timeStr) {
+    const h = parseInt(timeStr.split(':')[0]);
+    return { start: timeStr, end: String(Math.min(h + 1, 23)).padStart(2,'0') + ':00' };
+  }
+  const now = new Date();
+  const nextH = Math.min(now.getHours() + 1, 23);
+  return {
+    start: String(nextH).padStart(2,'0') + ':00',
+    end:   String(Math.min(nextH + 1, 23)).padStart(2,'0') + ':00'
+  };
+}
+
+function setAlldayUI(on) {
+  isAllDay = on;
+  document.getElementById('allday-toggle').classList.toggle('on', on);
+  document.getElementById('time-row').style.display = on ? 'none' : '';
+  if (on) {
+    document.getElementById('evt-start').value = '';
+    document.getElementById('evt-end').value = '';
+  }
+}
+
+function toggleAllDay() {
+  setAlldayUI(!isAllDay);
+  if (!isAllDay) {
+    const t = defaultTimes(null);
+    document.getElementById('evt-start').value = t.start;
+    document.getElementById('evt-end').value   = t.end;
+  }
+}
 
 function buildColorSwatches() {
   const row = document.getElementById('color-swatches');
@@ -1171,13 +1230,16 @@ function openAddModal(dateStr, timeStr) {
   document.getElementById('modal-title-text').textContent = '予定を追加';
   document.getElementById('evt-title').value = '';
   document.getElementById('evt-date').value = dateStr || fmt(calCursor);
-  document.getElementById('evt-start').value = timeStr || '';
-  document.getElementById('evt-end').value = '';
+  document.getElementById('evt-date-end').value = '';
   document.getElementById('evt-note').value = '';
   document.getElementById('evt-recur').value = 'none';
   document.getElementById('evt-recur-end').value = '';
   document.getElementById('evt-reminder').value = 'none';
   document.getElementById('recur-end-row').style.display = 'none';
+  setAlldayUI(false);
+  const t = defaultTimes(timeStr || null);
+  document.getElementById('evt-start').value = t.start;
+  document.getElementById('evt-end').value   = t.end;
   selectedColor = EVENT_COLORS[4].hex;
   buildColorSwatches();
   document.getElementById('modal-actions').innerHTML =
@@ -1194,13 +1256,18 @@ function openEditModal(id) {
   document.getElementById('modal-title-text').textContent = '予定を編集';
   document.getElementById('evt-title').value = evt.title;
   document.getElementById('evt-date').value = evt.date;
-  document.getElementById('evt-start').value = evt.start || '';
-  document.getElementById('evt-end').value = evt.end || '';
+  document.getElementById('evt-date-end').value = evt.dateEnd || '';
   document.getElementById('evt-note').value = evt.note || '';
   document.getElementById('evt-recur').value = evt.recur || 'none';
   document.getElementById('evt-recur-end').value = evt.recurEnd || '';
   document.getElementById('evt-reminder').value = evt.reminder || 'none';
   document.getElementById('recur-end-row').style.display = (evt.recur && evt.recur !== 'none') ? '' : 'none';
+  const allDay = !evt.start;
+  setAlldayUI(allDay);
+  if (!allDay) {
+    document.getElementById('evt-start').value = evt.start || '';
+    document.getElementById('evt-end').value   = evt.end   || '';
+  }
   selectedColor = evt.color;
   buildColorSwatches();
   document.getElementById('modal-actions').innerHTML =
@@ -1231,7 +1298,8 @@ function saveEvent() {
   const reminder = document.getElementById('evt-reminder').value;
   if (!date) { document.getElementById('evt-date').focus(); return; }
 
-  const evtData = { title, date, start, end, note, color: selectedColor, recur, recurEnd, reminder };
+  const dateEnd  = document.getElementById('evt-date-end').value;
+  const evtData = { title, date, dateEnd, start, end, note, color: selectedColor, recur, recurEnd, reminder };
 
   if (editingId) {
     const idx = events.findIndex(e => e.id === editingId);
@@ -1258,7 +1326,9 @@ function showDetail(id, dateStr) {
   detailDateStr = dateStr || evt.date;
   document.getElementById('detail-color-bar').style.background = evt.color;
   document.getElementById('detail-title').textContent = evt.title;
-  let timeText = dayLabel(detailDateStr);
+  let timeText = (evt.dateEnd && evt.dateEnd !== evt.date)
+    ? dayLabel(evt.date) + ' 〜 ' + dayLabel(evt.dateEnd)
+    : dayLabel(detailDateStr);
   if (evt.start) timeText += '　' + evt.start + (evt.end ? ' 〜 ' + evt.end : '');
   document.getElementById('detail-time').textContent = timeText;
   document.getElementById('detail-note').textContent = evt.note || '';
