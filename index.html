@@ -609,7 +609,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.6.1';
+const VERSION = 'ver.1.6.2';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -707,10 +707,6 @@ function eventsOn(dateStr) {
       if (!b.start) return 1;
       return a.start.localeCompare(b.start);
     });
-}
-
-function isRecurringInstance(evt, dateStr) {
-  return evt.date !== dateStr && matchesRecurrence(evt, dateStr);
 }
 
 /* ══════════════════════════
