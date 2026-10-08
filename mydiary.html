@@ -15,7 +15,7 @@
   --bg:#fff;--bg2:#f6f6f2;--bg3:#eeecea;
   --text:#1a1a1a;--text2:#666;--text3:#aaa;
   --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.18);
-  --accent:#1a1a1a;--green:#1d9e75;--red:#e24b4a;--blue:#378add;
+  --accent:#1a1a1a;--green:#1d9e75;--red:#e24b4a;--blue:#378add;--task:#534AB7;--today-frame:#7fd99a;
   --r:10px;--rl:16px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top:    env(safe-area-inset-top,    0px);
@@ -87,13 +87,13 @@ input,select,textarea{
 .add-event-btn:active{background:var(--bg2)}
 
 /* ── Monthly ── */
-#view-month{padding:0 16px 16px}
+#view-month{padding:0 0 16px}
 .cal-head{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px}
 .cal-dow{font-size:11px;color:var(--text2);padding:3px 0;font-weight:500}
 .cal-dow:first-child{color:var(--red)}
 .cal-dow:last-child{color:var(--blue)}
 .cal-body-month{display:grid;grid-template-columns:repeat(7,1fr);border-left:0.5px solid var(--border);border-top:0.5px solid var(--border)}
-.cal-cell{min-height:58px;border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+.cal-cell{position:relative;height:var(--cal-cell-h,90px);border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
 /* today panel */
 .today-panel{padding:12px 16px 16px;border-top:1px solid var(--border)}
 .today-panel-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase}
@@ -101,19 +101,28 @@ input,select,textarea{
 .today-evt-item:last-child{border-bottom:none}
 .today-evt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .today-evt-info{flex:1;min-width:0}
-.today-evt-title{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.today-evt-title{font-size:13px;font-weight:500;overflow:hidden;text-overflow:clip;white-space:nowrap}
 .today-evt-time{font-size:11px;color:var(--text2);margin-top:1px}
 .today-empty{text-align:center;color:var(--text3);font-size:13px;padding:10px 0}
 /* version */
 .header-ver{font-size:10px;color:var(--text3);display:block;text-align:right;margin-top:1px}
 .cal-cell:active{background:var(--bg2)}
 .cal-cell .dnum{font-size:12px;text-align:center;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin:0 auto 2px}
-.cal-cell.today .dnum{background:var(--text);color:#fff}
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--today-frame)}
+.cal-cell.today .dnum{font-weight:500}
 .cal-cell.other .dnum{color:var(--text3)}
 .cal-cell.sun .dnum{color:var(--red)}
 .cal-cell.sat .dnum{color:var(--blue)}
-.cal-cell.today.sun .dnum,.cal-cell.today.sat .dnum{background:var(--text);color:#fff}
-.evt-pill{font-size:9px;line-height:1.3;border-radius:3px;padding:1px 3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(0,0,0,.7);font-weight:500}
+.evt-pill{font-size:9px;line-height:1.3;border-radius:3px;padding:1px 3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:clip;color:rgba(0,0,0,.7);font-weight:500}
+/* タスクの残数・期限の線(カレンダー上) */
+.task-badge{position:absolute;right:2px;top:3px;min-width:15px;height:15px;box-sizing:border-box;border-radius:8px;border:1.3px solid var(--task);color:var(--task);background:var(--bg);font-size:9px;line-height:12px;text-align:center;font-weight:500;padding:0 2px;z-index:1}
+.task-badge.over{border-color:var(--red);color:var(--red)}
+.task-line{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--task);z-index:3;pointer-events:none}
+.task-line::before{content:'';position:absolute;left:-1px;top:-5px;width:7px;height:7px;border-radius:50%;background:var(--task)}
+.day-task-line{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--task);z-index:4;pointer-events:none}
+.day-task-line::before{content:'';position:absolute;left:-1px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--task)}
+.day-task-label{position:absolute;right:6px;top:-17px;max-width:75%;font-size:10px;line-height:15px;font-weight:500;color:var(--task);background:var(--bg);padding:0 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.day-task-label.below{top:3px}
 /* date jump */
 .date-jump-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s}
 .date-jump-overlay.open{opacity:1;pointer-events:all}
@@ -127,7 +136,7 @@ input,select,textarea{
 /* ── Weekly ── */
 #view-week{display:none;flex:1;overflow:hidden;flex-direction:column}
 #view-week.show{display:flex}
-.week-head{display:grid;grid-template-columns:40px repeat(7,1fr);border-bottom:0.5px solid var(--border);padding:0 0 4px;margin:0 16px}
+.week-head{display:grid;grid-template-columns:40px repeat(7,1fr);border-bottom:0.5px solid var(--border);padding:0 0 4px;margin:0 4px}
 .week-day-col{text-align:center;font-size:11px;color:var(--text2)}
 .week-day-col .wdow{font-size:10px;margin-bottom:2px}
 .week-day-col .wdnum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:12px}
@@ -135,7 +144,7 @@ input,select,textarea{
 .week-day-col.sun .wdow,.week-day-col.sun .wdnum{color:var(--red)}
 .week-day-col.sat .wdow,.week-day-col.sat .wdnum{color:var(--blue)}
 .week-day-col.today.sun .wdnum,.week-day-col.today.sat .wdnum{background:var(--text);color:#fff}
-.time-grid{flex:1;overflow-y:auto;position:relative;margin:0 16px}
+.time-grid{flex:1;overflow-y:auto;position:relative;margin:0 4px}
 .week-time-row{display:grid;grid-template-columns:40px repeat(7,1fr);min-height:44px;border-bottom:0.5px solid var(--border)}
 .time-label{font-size:10px;color:var(--text3);padding:3px 6px 0 0;text-align:right;line-height:1}
 .time-cell{border-left:0.5px solid var(--border);position:relative;cursor:pointer}
@@ -350,6 +359,7 @@ input,select,textarea{
     <div class="tab active" onclick="switchTab('calendar')"><i class="ti ti-calendar" aria-hidden="true"></i>カレンダー</div>
     <div class="tab" onclick="switchTab('diary')"><i class="ti ti-book" aria-hidden="true"></i>日記</div>
     <div class="tab" onclick="switchTab('memo')"><i class="ti ti-notes" aria-hidden="true"></i>メモ帳</div>
+    <div class="tab" onclick="switchTab('tasks')"><i class="ti ti-checkbox" aria-hidden="true"></i>タスク</div>
   </div>
 
   <!-- ══ CALENDAR SCREEN ══ -->
@@ -374,11 +384,11 @@ input,select,textarea{
 
       <!-- Monthly view -->
       <div id="view-month" style="display:flex;flex-direction:column;flex:1;overflow-y:auto">
-        <div class="cal-head" style="padding:0 16px">
+        <div class="cal-head" style="padding:0 4px">
           <div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div>
           <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div>
         </div>
-        <div class="cal-body-month" id="cal-body-month" style="margin:0 16px"></div>
+        <div class="cal-body-month" id="cal-body-month" style="margin:0 4px"></div>
         <div class="today-panel" id="today-panel"></div>
       </div>
 
@@ -431,6 +441,9 @@ input,select,textarea{
       <div id="memo-list"></div>
     </div>
   </div>
+
+  <!-- ══ TASKS SCREEN ══ -->
+  <div id="screen-tasks" class="screen"></div>
 
 </div><!-- .app -->
 
@@ -609,7 +622,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.6.2';
+const VERSION = 'ver.1.7.0';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -774,18 +787,23 @@ function scheduleReminders() {
 ══════════════════════════ */
 let currentView = 'month';
 let calCursor = new Date(TODAY);
+let calCellH = 90;        // 月表示のセルの高さ(画面の高さに合わせて決める)
+let taskDue = {};         // 日付ごとの未完了タスク(Tasks.pendingByDate())。描画のたびに更新
+let monthPillMax = 3;     // 月表示のセルに出す予定の件数(セルが低いときは2件)
 
 /* ══════════════════════════
    TAB SWITCHING
 ══════════════════════════ */
 function switchTab(t) {
-  ['calendar','diary','memo'].forEach((s,i) => {
+  ['calendar','diary','memo','tasks'].forEach((s,i) => {
     document.getElementById('screen-'+s).classList.toggle('active', s===t);
     document.querySelectorAll('.tab')[i].classList.toggle('active', s===t);
   });
-  document.getElementById('header-title').textContent = {calendar:'カレンダー',diary:'日記',memo:'メモ帳'}[t];
+  document.getElementById('header-title').textContent = {calendar:'カレンダー',diary:'日記',memo:'メモ帳',tasks:'タスク'}[t];
   if (t==='diary') renderDiary();
   if (t==='memo')  renderMemos();
+  if (t==='tasks') Tasks.render();
+  if (t==='calendar') renderCurrentView();
 }
 
 /* ══════════════════════════
@@ -857,12 +875,27 @@ function confirmDateJump() {
 /* ══════════════════════════
    MONTHLY VIEW
 ══════════════════════════ */
+/* 6週の月でもスクロールなしで収まるよう、画面の高さに合わせてセルの高さを決める(64〜100px) */
+function fitMonthCells(rows) {
+  const body = document.getElementById('cal-body-month');
+  if (body.offsetParent !== null) {                     // 表示中のときだけ測れる
+    const top = body.getBoundingClientRect().top + window.scrollY;
+    const pb = parseFloat(getComputedStyle(document.querySelector('.app')).paddingBottom) || 0;
+    const avail = window.innerHeight - top - 8 - pb;
+    calCellH = Math.max(64, Math.min(100, Math.floor(avail / rows)));
+  }
+  monthPillMax = calCellH >= 86 ? 3 : 2;
+  body.style.setProperty('--cal-cell-h', calCellH + 'px');
+}
+
 function renderMonth() {
+  taskDue = Tasks.pendingByDate();
   const y = calCursor.getFullYear(), m = calCursor.getMonth();
   setNavLabel(y+'年'+(m+1)+'月');
   const fd = new Date(y, m, 1).getDay();
   const ld = new Date(y, m+1, 0).getDate();
   const pl = new Date(y, m, 0).getDate();
+  fitMonthCells(Math.ceil((fd+ld)/7));
   let h = '';
   for (let i = 0; i < fd; i++) {
     const d = pl - fd + 1 + i;
@@ -913,15 +946,17 @@ function renderTodayPanel() {
 
 function monthCell(d, k, other, extra='') {
   const evts = eventsOn(k);
-  const pills = evts.slice(0,2).map(e => {
-    const truncated = e.title.length > 5 ? e.title.slice(0,5)+'…' : e.title;
-    return `<div class="evt-pill" style="background:${e.color}">${truncated}</div>`;
+  const pills = evts.slice(0,monthPillMax).map(e => {
+    return `<div class="evt-pill" style="background:${e.color}">${escHtml(e.title)}</div>`;
   }).join('');
-  const moreDot = evts.length > 2 ? `<div style="font-size:9px;color:var(--text3);text-align:center">…</div>` : '';
+  const moreDot = evts.length > monthPillMax ? `<div style="font-size:9px;color:var(--text3);text-align:center">…</div>` : '';
   const diaryMark = diaries[k] ? `<div class="diary-dot"></div>` : '';
+  const tk = taskDue[k] || [];
+  const taskBadge = tk.length
+    ? `<span class="task-badge${tk.some(t => t.overdue) ? ' over' : ''}" aria-label="タスク${tk.length}件">${tk.length > 99 ? '99+' : tk.length}</span>` : '';
   const cls = ['cal-cell', other?'other':'', extra].filter(Boolean).join(' ');
   return `<div class="${cls}" onclick="onMonthDayClick('${k}')">
-    <div class="dnum">${d}</div>${pills}${moreDot}${diaryMark}
+    <div class="dnum">${d}</div>${taskBadge}${pills}${moreDot}${diaryMark}
   </div>`;
 }
 
@@ -934,6 +969,7 @@ function onMonthDayClick(k) {
    WEEKLY VIEW
 ══════════════════════════ */
 function renderWeek() {
+  taskDue = Tasks.pendingByDate();
   const ws = weekStart(calCursor);
   const we = addDays(ws, 6);
   const ys = ws.getFullYear(), ms = ws.getMonth()+1, ds = ws.getDate();
@@ -989,11 +1025,27 @@ function renderWeek() {
       const pill = document.createElement('div');
       pill.className = 'time-evt';
       pill.style.cssText = `background:${evt.color};top:${sm/60*CELL_H}px;height:${heightPx}px;`;
-      const label = evt.title.length > 6 ? evt.title.slice(0,6)+'…' : evt.title;
-      pill.innerHTML = `<span>${evt.start} ${label}</span>`;
+      pill.innerHTML = `<span>${evt.start} ${escHtml(evt.title)}</span>`;
       pill.onclick = (e) => { e.stopPropagation(); showDetail(evt.id, dStr); };
       cellEl.style.position = 'relative';
       cellEl.appendChild(pill);
+    });
+  }
+
+  // タスクの期限の線(同じ時刻は1本)
+  for (let i = 0; i < 7; i++) {
+    const dStr = fmt(addDays(ws, i));
+    const times = [...new Set((taskDue[dStr] || []).map(t => t.time))];
+    times.forEach(tm => {
+      const [th, tmin] = tm.split(':').map(Number);
+      const rowEl = grid.querySelectorAll('.week-time-row')[th];
+      const cellEl = rowEl && rowEl.querySelectorAll('.time-cell')[i];
+      if (!cellEl) return;
+      cellEl.style.position = 'relative';
+      const line = document.createElement('div');
+      line.className = 'task-line';
+      line.style.top = (tmin/60*CELL_H) + 'px';
+      cellEl.appendChild(line);
     });
   }
 
@@ -1029,6 +1081,7 @@ function renderWeek() {
 ══════════════════════════ */
 function renderDay() {
   const dStr = fmt(calCursor);
+  taskDue = Tasks.pendingByDate();
   setNavLabel(dayLabel(dStr));
   document.getElementById('day-head-label').textContent = dayLabel(dStr);
 
@@ -1050,6 +1103,8 @@ function renderDay() {
     for (let h = sh; h <= Math.min(endH, 23); h++) busyHours.add(h);
   });
 
+  const dayTasks = taskDue[dStr] || [];
+  dayTasks.forEach(t => busyHours.add(Number(t.time.slice(0, 2))));   // 線と名前の置き場所を確保
   let html = '';
   for (let hr = 0; hr < 24; hr++) {
     const busy = busyHours.has(hr);
@@ -1095,6 +1150,22 @@ function renderDay() {
     slot.style.position = 'relative';
     slot.style.overflow = 'visible';
     slot.appendChild(pill);
+  });
+
+  // タスクの期限の線(同じ時刻のタスクは1本にまとめ、名前を並べる)
+  const taskByTime = {};
+  dayTasks.forEach(t => { (taskByTime[t.time] = taskByTime[t.time] || []).push(t.title); });
+  Object.keys(taskByTime).forEach(tm => {
+    const [th, tmin] = tm.split(':').map(Number);
+    const slot = document.getElementById('dslot-'+th);
+    if (!slot) return;
+    slot.style.position = 'relative';
+    slot.style.overflow = 'visible';
+    const line = document.createElement('div');
+    line.className = 'day-task-line';
+    line.style.top = (tmin/60*CELL_H) + 'px';
+    line.innerHTML = `<span class="day-task-label${th === 0 && tmin < 20 ? ' below' : ''}">${escHtml(taskByTime[tm].join('、'))} ${tm}</span>`;
+    slot.appendChild(line);
   });
 
   // Now line
@@ -1484,7 +1555,7 @@ function closeSettings() {
 }
 
 function exportData() {
-  const data = { events, diaries, memos, exportedAt: new Date().toISOString() };
+  const data = { events, diaries, memos, tasks: Tasks.getTasks(), exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1505,6 +1576,7 @@ function importData(input) {
       if (Array.isArray(data.events))  events  = data.events;
       if (data.diaries && typeof data.diaries === 'object') diaries = data.diaries;
       if (Array.isArray(data.memos))   memos   = data.memos;
+      if (Array.isArray(data.tasks))   Tasks.setTasks(data.tasks);
       persist();
       renderCurrentView();
       closeSettings();
@@ -1720,6 +1792,578 @@ function delMemo(i) {
 }
 
 /* ══════════════════════════
+   TASKS (タスク管理 / tasks_ver.1.7.0.js を組み込み)
+══════════════════════════ */
+/* ============================================================
+   tasks_ver.1.7.0.js  ― mydiary タスク管理機能(第4のタブ)
+   単体で動作する独立モジュール。mydiary本体にはまだ組み込まれていない。
+
+   使い方:
+     Tasks.mount(document.getElementById('screen-tasks'), { storageKey:'md_tasks', lockScroll, unlockScroll });
+     Tasks.render();   // タブを開くたびに呼ぶ(日付の区切りを最新にし、チェックして残しておいたタスクを片づける)
+
+   依存: Tabler Icons(ti-*)、本体のCSS変数(--bg,--text,--green,--red 等。無ければ代替色)
+   保存: localStorage の storageKey(既定 'md_tasks')。他のデータには触れない。
+============================================================ */
+const Tasks = (() => {
+  'use strict';
+
+  /* ── 定数 ── */
+  const REP = { none: 'なし', daily: '毎日', weekly: '毎週', monthly: '毎月' };
+  const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+  const GROUPS = [
+    ['over', '期限超過'], ['today', '今日まで'], ['week', '来週まで'],
+    ['month', '今月まで'], ['later', 'それ以降'], ['none', '期限なし']
+  ];
+
+  /* ── 状態 ── */
+  let root = null;
+  let tasks = [];
+  let storageKey = 'md_tasks';
+  let nowFn = () => new Date();
+  let view = 'main';          // 'main' | 'done' | 'nodue'
+  let selMode = false;
+  let sel = new Set();
+  let editingId = null;       // null = 新規
+  let form = { hasDue: true, repeat: 'none' };
+  let hooks = {};             // 本体のスクロール固定などを呼ぶための任意フック {lock, unlock}
+  let held = new Set();       // チェック済みだが、画面を切り替えるまでその場に残すタスクのID
+
+  /* ── 日付ヘルパー ── */
+  const p2 = n => String(n).padStart(2, '0');
+  const ymd = d => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+  const slash = d => d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+  const hm = d => d.getHours() + ':' + p2(d.getMinutes());
+  const toIso = d => ymd(d) + 'T' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  const parseIso = s => {
+    const [a, b] = s.split('T');
+    const [y, m, d] = a.split('-').map(Number);
+    const [h, mi] = b.split(':').map(Number);
+    return new Date(y, m - 1, d, h, mi);
+  };
+  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, d.getHours(), d.getMinutes());
+  const daysInMonth = (y, mIdx) => new Date(y, mIdx + 1, 0).getDate();
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  /* ── 保存 ── */
+  function load() {
+    try {
+      const a = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      tasks = Array.isArray(a) ? a : [];
+    } catch (e) { tasks = []; }
+  }
+  function save() {
+    try { localStorage.setItem(storageKey, JSON.stringify(tasks)); } catch (e) {}
+  }
+
+  /* ── 繰り返し ── */
+  function stepDue(d, rep, anchorDay) {
+    if (rep === 'daily') return addDays(d, 1);
+    if (rep === 'weekly') return addDays(d, 7);
+    const mIdx = d.getMonth() + 1;            // 翌月(年またぎはDateが処理)
+    const y = d.getFullYear() + (mIdx > 11 ? 1 : 0);
+    const mm = mIdx % 12;
+    const day = Math.min(anchorDay, daysInMonth(y, mm));
+    return new Date(y, mm, day, d.getHours(), d.getMinutes());
+  }
+  /* 元の期限の次の周期。すでに過ぎていたら「今より後の最初の周期」 */
+  function nextDue(t, now) {
+    let d = parseIso(t.due);
+    let n = stepDue(d, t.repeat, t.anchorDay);
+    let guard = 0;
+    while (n <= now && guard++ < 5000) n = stepDue(n, t.repeat, t.anchorDay);
+    return n;
+  }
+
+  /* ── 区分け ── */
+  function groupInfo(now) {
+    const today = startOfDay(now);
+    const wk = addDays(today, 7);
+    const mEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const showMonth = wk.getMonth() === today.getMonth();   // 来週が来月なら「今月まで」を省略
+    return { today, wk, mEnd, showMonth };
+  }
+  function groupOf(t, now, gi) {
+    if (!t.due) return 'none';
+    const d = parseIso(t.due);
+    if (d < now) return 'over';
+    const dDay = startOfDay(d);
+    if (+dDay === +gi.today) return 'today';
+    if (dDay <= gi.wk) return 'week';
+    if (gi.showMonth && dDay <= gi.mEnd) return 'month';
+    return 'later';
+  }
+  function groupLabel(key, gi) {
+    const base = GROUPS.find(g => g[0] === key)[1];
+    if (key === 'today') return base + ' (' + slash(gi.today) + ')';
+    if (key === 'week') return base + ' (' + slash(gi.wk) + ')';
+    if (key === 'month') return base + ' (' + slash(gi.mEnd) + ')';
+    return base;
+  }
+
+  /* ── 操作 ── */
+  function complete(id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t || t.done) return;
+    const now = nowFn();
+    t.done = true;
+    t.doneAt = now.getTime();
+    if (t.repeat !== 'none' && t.due) {
+      const n = {
+        id: uid(), title: t.title, due: toIso(nextDue(t, now)), repeat: t.repeat,
+        anchorDay: t.anchorDay, done: false, doneAt: null, nextId: null, createdAt: now.getTime()
+      };
+      tasks.push(n);
+      t.nextId = n.id;
+    }
+    save();
+  }
+  function restore(id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t || !t.done) return;
+    if (t.nextId) {
+      const n = tasks.find(x => x.id === t.nextId);
+      if (n && !n.done) {
+        tasks = tasks.filter(x => x.id !== n.id);          // 自動追加された次の回を消す
+      } else if (n && n.done) {
+        t.repeat = 'none';                                  // 続きが進んでいるので単発として戻す
+      }                                                     // n が無い(削除済み)なら繰り返しありで戻す
+    }
+    t.done = false; t.doneAt = null; t.nextId = null;
+    save();
+  }
+  function removeIds(ids) {
+    const s = new Set(ids);
+    tasks = tasks.filter(x => !s.has(x.id));
+    save();
+  }
+
+  /* ── 描画 ── */
+  function repBadge(t) {
+    return t.repeat !== 'none' ? '<span class="tk-rp"><i class="ti ti-repeat" aria-hidden="true"></i>' + REP[t.repeat] + '</span>' : '';
+  }
+  /* 保留中(held)タスクの「次の回」は、画面を切り替えるまで表示しない */
+  function hiddenIds() {
+    const h = new Set();
+    tasks.forEach(t => { if (held.has(t.id) && t.nextId) h.add(t.nextId); });
+    return h;
+  }
+  function shownTasks() {
+    const hid = hiddenIds();
+    return tasks.filter(t => (!t.done || held.has(t.id)) && !hid.has(t.id));
+  }
+
+  function rowMain(t, key) {
+    let sub = '';
+    if (t.due) {
+      const d = parseIso(t.due);
+      sub = key === 'today' ? hm(d) : slash(d) + ' ' + hm(d);
+    }
+    const isHeld = held.has(t.id);
+    return '<div class="tk-row">' +
+      '<button class="tk-chk' + (isHeld ? ' on' : '') + '" data-act="' + (isHeld ? 'uncheck' : 'check') + '" data-id="' + t.id + '" aria-label="' + (isHeld ? '未完了に戻す' : '完了にする') + '">' +
+      (isHeld ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') + '</button>' +
+      '<div class="tk-body"' + (isHeld ? '' : ' data-act="edit" data-id="' + t.id + '"') + '>' +
+      '<div class="tk-tt' + (isHeld ? ' s' : '') + '">' + esc(t.title) + repBadge(t) + '</div>' +
+      (sub ? '<div class="tk-dl' + (key === 'over' ? ' red' : '') + '">' + sub + '</div>' : '') +
+      '</div></div>';
+  }
+  function renderMain() {
+    const now = nowFn();
+    const gi = groupInfo(now);
+    const shown = shownTasks();
+    const doneN = tasks.filter(t => t.done).length;
+    const noDueN = tasks.filter(t => !t.done && !t.due).length;
+    const buckets = {};
+    shown.forEach(t => { (buckets[groupOf(t, now, gi)] = buckets[groupOf(t, now, gi)] || []).push(t); });
+    let h = '<div class="tk-toolbar">' +
+      '<button class="tk-tbtn hl" data-act="open-nodue">' +
+      '<i class="ti ti-infinity" aria-hidden="true"></i>期限なし(' + noDueN + ')' +
+      '<i class="ti ti-chevron-right" aria-hidden="true"></i></button>' +
+      '<button class="tk-tbtn" data-act="open-done">' +
+      '<i class="ti ti-circle-check" aria-hidden="true"></i>完了済み(' + doneN + ')' +
+      '<i class="ti ti-chevron-right" aria-hidden="true"></i></button></div>';
+    let any = false;
+    GROUPS.forEach(([key]) => {
+      if (key === 'none') return;                     // 期限なしは専用画面に表示
+      const list = buckets[key];
+      if (!list || !list.length) return;
+      any = true;
+      list.sort((a, b) => (parseIso(a.due) - parseIso(b.due)) || (a.createdAt - b.createdAt));
+      h += '<div class="tk-pillw"><span class="tk-pill' + (key === 'over' ? ' red' : '') + '">' + groupLabel(key, gi) + '</span></div>';
+      h += list.map(t => rowMain(t, key)).join('');
+    });
+    if (!any) {
+      h += '<div class="tk-empty"><i class="ti ti-checkbox" aria-hidden="true"></i>' +
+        '<div class="tk-empty-t">' + (shown.length ? '期限つきのタスクはありません' : doneN ? 'すべて完了しました' : 'タスクはまだありません') + '</div>' +
+        '<div class="tk-empty-s">右下の＋から追加できます。</div></div>';
+    }
+    root.querySelector('#tk-list').innerHTML = h;
+  }
+
+  function renderNodue() {
+    const list = shownTasks().filter(t => !t.due).sort((a, b) => a.createdAt - b.createdAt);
+    let h = list.map(t => rowMain(t, 'none')).join('');
+    if (!list.length) {
+      h = '<div class="tk-empty"><i class="ti ti-infinity" aria-hidden="true"></i>' +
+        '<div class="tk-empty-t">期限なしのタスクはありません</div>' +
+        '<div class="tk-empty-s">右下の＋から追加できます。</div></div>';
+    } else {
+      h += '<div class="tk-empty-s tk-foot">期限を決めていないタスクです。追加した順に並びます。</div>';
+    }
+    root.querySelector('#tk-nodue-list').innerHTML = h;
+  }
+
+  function renderDone() {
+    const done = tasks.filter(t => t.done).sort((a, b) => b.doneAt - a.doneAt);
+    if (!done.length && selMode) { selMode = false; sel.clear(); }
+    const head = root.querySelector('#tk-done-head');
+    head.querySelector('[data-act="toggle-select"]').textContent = selMode ? 'キャンセル' : '選択';
+    head.querySelector('[data-act="toggle-select"]').style.visibility = done.length ? 'visible' : 'hidden';
+    let h = '';
+    let lastDay = null;
+    done.forEach(t => {
+      const day = slash(new Date(t.doneAt));
+      if (day !== lastDay) { h += '<div class="tk-pillw"><span class="tk-pill">' + day + '</span></div>'; lastDay = day; }
+      const checked = sel.has(t.id);
+      const subTxt = t.due ? '期限 ' + slash(parseIso(t.due)) + ' ' + hm(parseIso(t.due)) : '期限なし';
+      h += '<div class="tk-row" ' + (selMode ? 'data-act="toggle-sel" data-id="' + t.id + '"' : '') + '>' +
+        (selMode
+          ? '<span class="tk-chk sq' + (checked ? ' on dark' : '') + '">' + (checked ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') + '</span>'
+          : '<button class="tk-chk on" data-act="restore" data-id="' + t.id + '" aria-label="未完了に戻す"><i class="ti ti-check" aria-hidden="true"></i></button>') +
+        '<div class="tk-body"><div class="tk-tt s">' + esc(t.title) + repBadge(t) + '</div>' +
+        '<div class="tk-dl">' + subTxt + '</div></div></div>';
+    });
+    if (!done.length) {
+      h = '<div class="tk-empty"><i class="ti ti-circle-check" aria-hidden="true"></i>' +
+        '<div class="tk-empty-t">完了したタスクはありません</div>' +
+        '<div class="tk-empty-s">チェックを付けたタスクがここに並びます。</div></div>';
+    }
+    root.querySelector('#tk-done-list').innerHTML = h;
+    const bar = root.querySelector('#tk-bar');
+    bar.classList.toggle('show', selMode);
+    const allSel = done.length > 0 && sel.size === done.length;
+    bar.querySelector('[data-act="sel-all"]').textContent = allSel ? '全解除' : '全選択';
+    const delBtn = bar.querySelector('[data-act="del-sel"]');
+    delBtn.textContent = '選択を削除(' + sel.size + ')';
+    delBtn.classList.toggle('dim', sel.size === 0);
+    root.querySelector('#tk-done-list').classList.toggle('with-bar', selMode);
+  }
+
+  function refresh() {
+    if (!root) return;
+    root.classList.toggle('tk-view-done', view === 'done');
+    root.classList.toggle('tk-view-nodue', view === 'nodue');
+    renderMain();
+    renderNodue();
+    renderDone();
+  }
+
+  /* ── 追加・編集シート ── */
+  function defaultDue() {
+    const n = nowFn();
+    const d = new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours() + 1, 0);
+    return d;
+  }
+  function openSheet(id, opts) {
+    editingId = id || null;
+    const t = id ? tasks.find(x => x.id === id) : null;
+    const d = t && t.due ? parseIso(t.due) : defaultDue();
+    form.hasDue = t ? !!t.due : !(opts && opts.noDue);   // 期限なし画面からの追加は期限OFFで開く
+    form.repeat = t ? t.repeat : 'none';
+    q('#tk-f-title').value = t ? t.title : '';
+    q('#tk-f-date').value = ymd(d);
+    q('#tk-f-time').value = p2(d.getHours()) + ':' + p2(d.getMinutes());
+    q('#tk-sheet-title').textContent = t ? 'タスクを編集' : 'タスクを追加';
+    q('#tk-err').textContent = '';
+    q('[data-act="sheet-delete"]').style.display = t ? '' : 'none';
+    q('[data-act="sheet-save"]').textContent = t ? '保存' : '追加';
+    syncForm();
+    q('#tk-modal').classList.add('open');
+    if (hooks.lock) hooks.lock();
+    if (!t) setTimeout(() => q('#tk-f-title').focus(), 120);
+  }
+  function closeSheet() {
+    q('#tk-modal').classList.remove('open'); editingId = null;
+    if (hooks.unlock) hooks.unlock();
+  }
+  function syncForm() {
+    q('#tk-sw').classList.toggle('on', form.hasDue);
+    q('#tk-due-box').style.display = form.hasDue ? '' : 'none';
+    root.querySelectorAll('#tk-seg [data-rep]').forEach(b => b.classList.toggle('on', b.dataset.rep === form.repeat));
+    let hint = '';
+    const ds = q('#tk-f-date').value;
+    if (form.hasDue && ds && form.repeat !== 'none') {
+      const [y, m, dd] = ds.split('-').map(Number);
+      const d = new Date(y, m - 1, dd);
+      if (form.repeat === 'daily') hint = '毎日繰り返します';
+      if (form.repeat === 'weekly') hint = '毎週' + DOW[d.getDay()] + '曜に繰り返します';
+      if (form.repeat === 'monthly') hint = '毎月' + dd + '日に繰り返します' + (dd > 28 ? '(日数が足りない月は月末)' : '');
+    }
+    q('#tk-hint').textContent = hint;
+  }
+  function saveSheet() {
+    const title = q('#tk-f-title').value.trim();
+    const err = q('#tk-err');
+    if (!title) { err.textContent = 'タスク名を入力してください'; q('#tk-f-title').focus(); return; }
+    let due = null, repeat = 'none', anchorDay = null;
+    if (form.hasDue) {
+      const ds = q('#tk-f-date').value, ts = q('#tk-f-time').value;
+      if (!ds) { err.textContent = '期限の日付を入力してください'; return; }
+      if (!ts) { err.textContent = '期限の時刻を入力してください'; return; }
+      due = ds + 'T' + ts;
+      repeat = form.repeat;
+      anchorDay = Number(ds.split('-')[2]);
+    }
+    if (editingId) {
+      const t = tasks.find(x => x.id === editingId);
+      t.title = title; t.due = due; t.repeat = repeat; t.anchorDay = anchorDay;
+    } else {
+      tasks.push({
+        id: uid(), title, due, repeat, anchorDay,
+        done: false, doneAt: null, nextId: null, createdAt: nowFn().getTime()
+      });
+    }
+    save();
+    closeSheet();
+    refresh();
+  }
+  function deleteFromSheet() {
+    const t = tasks.find(x => x.id === editingId);
+    if (!t) return;
+    const msg = '「' + t.title + '」を削除しますか?' + (t.repeat !== 'none' ? '\n繰り返しも終了します。' : '');
+    if (!confirm(msg)) return;
+    removeIds([t.id]);
+    closeSheet();
+    refresh();
+  }
+
+  /* ── クリック処理 ── */
+  function q(sel) { return root.querySelector(sel); }
+  function onClick(e) {
+    if (e.target.id === 'tk-modal') { closeSheet(); return; }
+    const el = e.target.closest('[data-act]');
+    if (!el || !root.contains(el)) return;
+    const act = el.dataset.act, id = el.dataset.id;
+    switch (act) {
+      case 'check':
+        complete(id); held.add(id); refresh();       // その場に残す(画面を切り替えるまで)
+        break;
+      case 'uncheck': restore(id); held.delete(id); refresh(); break;
+      case 'edit': openSheet(id); break;
+      case 'add': openSheet(null, { noDue: view === 'nodue' }); break;
+      case 'open-nodue': held.clear(); view = 'nodue'; refresh(); break;
+      case 'open-done': held.clear(); view = 'done'; selMode = false; sel.clear(); refresh(); break;
+      case 'back': held.clear(); view = 'main'; selMode = false; sel.clear(); refresh(); break;
+      case 'restore': restore(id); refresh(); break;
+      case 'toggle-select': selMode = !selMode; sel.clear(); refresh(); break;
+      case 'toggle-sel': sel.has(id) ? sel.delete(id) : sel.add(id); renderDone(); break;
+      case 'sel-all': {
+        const all = tasks.filter(t => t.done).map(t => t.id);
+        if (sel.size === all.length) sel.clear(); else all.forEach(i => sel.add(i));
+        renderDone(); break;
+      }
+      case 'del-sel':
+        if (!sel.size) return;
+        if (!confirm(sel.size + '件の完了済みタスクを削除しますか?')) return;
+        removeIds([...sel]); sel.clear(); refresh(); break;
+      case 'del-all': {
+        const n = tasks.filter(t => t.done).length;
+        if (!n) return;
+        if (!confirm('完了済みタスク' + n + '件をすべて削除しますか?')) return;
+        removeIds(tasks.filter(t => t.done).map(t => t.id)); sel.clear(); refresh(); break;
+      }
+      case 'sw': form.hasDue = !form.hasDue; syncForm(); break;
+      case 'rep': form.repeat = el.dataset.rep; syncForm(); break;
+      case 'sheet-cancel': closeSheet(); break;
+      case 'sheet-save': saveSheet(); break;
+      case 'sheet-delete': deleteFromSheet(); break;
+    }
+  }
+
+  /* ── DOM / CSS ── */
+  const CSS = `
+.tk-root{position:relative;flex:1;flex-direction:column;min-height:0;color:var(--text,#1a1a1a);font-family:inherit}
+.tk-main,.tk-done,.tk-nodue{flex:1;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.tk-main{display:flex;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.tk-done,.tk-nodue{display:none}
+.tk-root.tk-view-done .tk-main,.tk-root.tk-view-nodue .tk-main{display:none}
+.tk-root.tk-view-done .tk-done{display:flex}
+.tk-root.tk-view-nodue .tk-nodue{display:flex}
+.tk-root.tk-view-done .tk-fab{display:none}
+.tk-toolbar{display:flex;justify-content:flex-end;gap:6px;padding:10px 16px 0}
+.tk-tbtn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-family:inherit;color:var(--text,#1a1a1a);border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:16px;padding:5px 10px;background:var(--bg2,#f6f6f2);cursor:pointer}
+.tk-tbtn i{font-size:14px}
+.tk-tbtn.hl{border-color:var(--text,#1a1a1a)}
+.tk-foot{text-align:center;padding:18px 24px calc(96px + env(safe-area-inset-bottom,0px));color:var(--text2,#666)}
+.tk-pillw{display:flex;justify-content:center;padding:14px 0 4px}
+.tk-pill{font-size:11px;color:#fff;background:#8a8a85;border-radius:12px;padding:3px 12px}
+.tk-pill.red{background:var(--red,#e24b4a)}
+.tk-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09))}
+.tk-chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--text3,#aaa);background:none;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;padding:0;cursor:pointer;transition:background .15s,border-color .15s}
+.tk-chk.on{background:var(--green,#1d9e75);border-color:var(--green,#1d9e75)}
+.tk-chk.sq{border-radius:7px}
+.tk-chk.sq.on.dark{background:var(--text,#1a1a1a);border-color:var(--text,#1a1a1a)}
+.tk-body{flex:1;min-width:0;cursor:pointer}
+.tk-tt{font-size:14px;word-break:break-word}
+.tk-tt.s{text-decoration:line-through;color:var(--text3,#aaa)}
+.tk-dl{font-size:11px;color:var(--text2,#666);margin-top:2px}
+.tk-dl.red{color:var(--red,#e24b4a)}
+.tk-rp{display:inline-flex;align-items:center;gap:2px;font-size:10px;color:#185FA5;background:#E6F1FB;border-radius:8px;padding:0 6px;margin-left:6px;vertical-align:1px}
+.tk-rp i{font-size:11px}
+.tk-empty{text-align:center;padding:64px 24px;color:var(--text2,#666)}
+.tk-empty i{font-size:36px;color:var(--text3,#aaa)}
+.tk-empty-t{font-size:14px;color:var(--text,#1a1a1a);margin-top:8px}
+.tk-empty-s{font-size:12px;margin-top:4px}
+.tk-fab{position:fixed;right:max(16px,calc(50vw - 199px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:none;background:var(--accent,#1a1a1a);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:30;box-shadow:0 2px 8px rgba(0,0,0,.25);padding:0}
+.tk-fab:active{transform:scale(.94)}
+.tk-done-head,.tk-nodue-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09));position:sticky;top:0;background:var(--bg,#fff);z-index:5}
+.tk-done-head button,.tk-nodue-head button{background:none;border:none;font-family:inherit;font-size:13px;color:var(--blue,#378add);cursor:pointer;min-width:64px;padding:4px 0}
+.tk-done-head button:first-child,.tk-nodue-head button:first-child{text-align:left}
+.tk-done-head button:last-child,.tk-nodue-head button:last-child{text-align:right}
+.tk-nodue-head .tk-spacer{min-width:64px}
+.tk-done-head b,.tk-nodue-head b{font-size:15px;font-weight:500}
+.tk-done-list.with-bar{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.tk-bar{display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bg,#fff);border-top:.5px solid var(--border,rgba(0,0,0,.09));padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));gap:8px;z-index:40;box-sizing:border-box}
+.tk-bar.show{display:flex}
+.tk-btn{flex:1;padding:10px 4px;border-radius:var(--r,10px);font-size:13px;font-family:inherit;cursor:pointer;background:none;border:.5px solid var(--border2,rgba(0,0,0,.18));color:var(--text,#1a1a1a);white-space:nowrap}
+.tk-btn.red{color:var(--red,#e24b4a);border-color:var(--red,#e24b4a)}
+.tk-btn.fill{background:var(--red,#e24b4a);border-color:var(--red,#e24b4a);color:#fff}
+.tk-btn.dim{opacity:.4}
+.tk-btn.dark{background:var(--text,#1a1a1a);border-color:var(--text,#1a1a1a);color:#fff;font-weight:500}
+.tk-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;touch-action:none}
+.tk-modal.open{opacity:1;pointer-events:all}
+.tk-sheet{background:var(--bg,#fff);border-radius:20px 20px 0 0;width:100%;max-width:430px;box-sizing:border-box;transform:translateY(20px);transition:transform .2s;max-height:92vh;overflow:hidden}
+.tk-modal.open .tk-sheet{transform:translateY(0)}
+.tk-sheet-in{padding:20px 16px calc(28px + env(safe-area-inset-bottom,0px));overflow-y:auto;overflow-x:hidden;max-height:92vh;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.tk-sheet-t{font-size:16px;font-weight:500;margin-bottom:12px;text-align:center}
+.tk-lb{font-size:12px;color:var(--text2,#666);margin:12px 0 5px;display:block}
+.tk-in{width:100%;min-height:42px;border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:var(--r,10px);padding:9px 12px;font-size:16px;font-family:inherit;background:var(--bg,#fff);color:var(--text,#1a1a1a);outline:none;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block}
+.tk-in:focus{border-color:var(--text,#1a1a1a)}
+.tk-in::-webkit-date-and-time-value{text-align:left}
+.tk-tg{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-top:16px}
+.tk-sw{width:44px;height:26px;border-radius:13px;background:var(--bg3,#eeecea);border:.5px solid var(--border2,rgba(0,0,0,.18));position:relative;cursor:pointer;padding:0;transition:background .15s}
+.tk-sw:after{content:'';position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s}
+.tk-sw.on{background:var(--green,#1d9e75);border-color:var(--green,#1d9e75)}
+.tk-sw.on:after{left:20px}
+.tk-seg{display:flex;border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:var(--r,10px);overflow:hidden}
+.tk-seg button{flex:1;padding:9px 0;font-size:13px;font-family:inherit;background:var(--bg2,#f6f6f2);color:var(--text2,#666);border:none;cursor:pointer}
+.tk-seg button.on{background:var(--text,#1a1a1a);color:#fff}
+.tk-hint{font-size:11px;color:#185FA5;margin-top:5px;min-height:14px}
+.tk-err{font-size:12px;color:var(--red,#e24b4a);margin-top:8px;min-height:16px}
+.tk-actions{display:flex;gap:8px;margin-top:8px}
+`;
+
+  const HTML = `
+<div class="tk-main" id="tk-main"><div id="tk-list"></div></div>
+<div class="tk-nodue" id="tk-nodue">
+  <div class="tk-nodue-head">
+    <button data-act="back"><i class="ti ti-chevron-left" aria-hidden="true"></i>タスク</button>
+    <b>期限なし</b>
+    <span class="tk-spacer"></span>
+  </div>
+  <div id="tk-nodue-list"></div>
+</div>
+<div class="tk-done" id="tk-done">
+  <div class="tk-done-head" id="tk-done-head">
+    <button data-act="back"><i class="ti ti-chevron-left" aria-hidden="true"></i>タスク</button>
+    <b>完了済み</b>
+    <button data-act="toggle-select">選択</button>
+  </div>
+  <div id="tk-done-list" class="tk-done-list"></div>
+</div>
+<div class="tk-bar" id="tk-bar">
+  <button class="tk-btn" data-act="sel-all">全選択</button>
+  <button class="tk-btn red" data-act="del-all">すべて削除</button>
+  <button class="tk-btn fill" data-act="del-sel">選択を削除(0)</button>
+</div>
+<button class="tk-fab" data-act="add" aria-label="タスクを追加"><i class="ti ti-plus" aria-hidden="true"></i></button>
+<div class="tk-modal" id="tk-modal">
+  <div class="tk-sheet"><div class="tk-sheet-in">
+    <div class="tk-sheet-t" id="tk-sheet-title">タスクを追加</div>
+    <label class="tk-lb" for="tk-f-title" style="margin-top:0">タスク名</label>
+    <input class="tk-in" id="tk-f-title" type="text" maxlength="100" placeholder="例: 提出物を出す" autocomplete="off">
+    <div class="tk-tg"><span>期限を設定する</span><button class="tk-sw" id="tk-sw" data-act="sw" role="switch" aria-label="期限を設定する"></button></div>
+    <div id="tk-due-box">
+      <label class="tk-lb" for="tk-f-date">期限の日付</label>
+      <input class="tk-in" id="tk-f-date" type="date">
+      <label class="tk-lb" for="tk-f-time">期限の時刻</label>
+      <input class="tk-in" id="tk-f-time" type="time">
+      <span class="tk-lb">繰り返し</span>
+      <div class="tk-seg" id="tk-seg">
+        <button data-act="rep" data-rep="none">なし</button>
+        <button data-act="rep" data-rep="daily">毎日</button>
+        <button data-act="rep" data-rep="weekly">毎週</button>
+        <button data-act="rep" data-rep="monthly">毎月</button>
+      </div>
+      <div class="tk-hint" id="tk-hint"></div>
+    </div>
+    <div class="tk-err" id="tk-err"></div>
+    <div class="tk-actions">
+      <button class="tk-btn red" data-act="sheet-delete">削除</button>
+      <button class="tk-btn" data-act="sheet-cancel">キャンセル</button>
+      <button class="tk-btn dark" data-act="sheet-save">追加</button>
+    </div>
+  </div></div>
+</div>`;
+
+  /* ── 公開API ── */
+  function mount(el, opts) {
+    opts = opts || {};
+    root = el;
+    if (opts.storageKey) storageKey = opts.storageKey;
+    if (opts.now) nowFn = opts.now;
+    hooks = { lock: opts.lockScroll, unlock: opts.unlockScroll };
+    if (!document.getElementById('tk-style')) {
+      const st = document.createElement('style');
+      st.id = 'tk-style'; st.textContent = CSS;
+      document.head.appendChild(st);
+    }
+    root.classList.add('tk-root');
+    root.innerHTML = HTML;
+    root.addEventListener('click', onClick);
+    q('#tk-f-date').addEventListener('change', syncForm);
+    q('#tk-f-title').addEventListener('input', () => { q('#tk-err').textContent = ''; });
+    q('#tk-f-title').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveSheet(); } });
+    load();
+    refresh();
+    document.addEventListener('visibilitychange', () => {   // アプリを閉じる/別アプリへ移るときも片づける
+      if (document.hidden) { held.clear(); refresh(); }
+    });
+    setInterval(() => {                                // 日付をまたいだら区切りを更新
+      if (view === 'main' && !q('#tk-modal').classList.contains('open') && root.offsetParent !== null) renderMain();
+    }, 60000);
+  }
+
+  /* カレンダー用: 期限のある未完了タスクを日付ごとにまとめる { 'YYYY-MM-DD': [{id,title,time,overdue}] } */
+  function pendingByDate() {
+    const now = nowFn();
+    const map = {};
+    tasks.forEach(t => {
+      if (t.done || !t.due) return;
+      const k = t.due.slice(0, 10);
+      (map[k] = map[k] || []).push({ id: t.id, title: t.title, time: t.due.slice(11, 16), overdue: parseIso(t.due) < now });
+    });
+    Object.keys(map).forEach(k => map[k].sort((a, b) => a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+    return map;
+  }
+
+  /* 公開 render は「画面を切り替えた」扱い: 保留中のチェック済みを片づけ、繰り返しの次の回を出す */
+  function render() { held.clear(); refresh(); }
+
+  return {
+    mount, render,
+    setNow(fn) { nowFn = fn || (() => new Date()); render(); },
+    getTasks() { return tasks; },
+    pendingByDate,
+    setTasks(a) { tasks = a; save(); render(); },
+    reload() { load(); render(); }
+  };
+})();
+
+/* ══════════════════════════
    INIT
 ══════════════════════════ */
 document.getElementById('header-date').textContent =
@@ -1727,11 +2371,28 @@ document.getElementById('header-date').textContent =
 document.getElementById('header-ver').textContent = VERSION;
 
 setInterval(() => {
-  if (currentView === 'week' || currentView === 'day') renderCurrentView();
+  renderCurrentView();
 }, 60000);
+
+Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', lockScroll, unlockScroll });
 
 initNotifications();
 setView('month');
+
+/* 月表示のセルの高さを測り直す(幅が変わったとき・向きが変わったとき・フォント読み込み後)。
+   高さだけの変化(iOSのツールバーの出入り)では測り直さない: スクロール中に表示がずれるため */
+let calLastW = window.innerWidth;
+window.addEventListener('resize', () => {
+  if (window.innerWidth === calLastW) return;
+  calLastW = window.innerWidth;
+  if (currentView === 'month') renderMonth();
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => { if (currentView === 'month') renderMonth(); }, 300);
+});
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => { if (currentView === 'month') renderMonth(); });
+}
 
 /* ══════════════════════════
    SWIPE NAVIGATION
