@@ -85,18 +85,19 @@ input,select,textarea{
 .cal-nav-label i{font-size:13px;color:var(--text3)}
 .add-event-btn{display:flex;align-items:center;gap:4px;padding:6px 11px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit}
 .add-event-btn:active{background:var(--bg2)}
+.cal-actions{display:flex;gap:6px;flex-shrink:0}
+.cal-actions .add-event-btn{white-space:nowrap}
+@media (max-width:389px){.today-open-btn .btn-lbl{display:none}}
 
 /* ── Monthly ── */
-#view-month{padding:0 0 16px}
+#view-month{padding:0}
 .cal-head{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px}
 .cal-dow{font-size:11px;color:var(--text2);padding:3px 0;font-weight:500}
 .cal-dow:first-child{color:var(--red)}
 .cal-dow:last-child{color:var(--blue)}
 .cal-body-month{display:grid;grid-template-columns:repeat(7,1fr);border-left:0.5px solid var(--border);border-top:0.5px solid var(--border)}
-.cal-cell{position:relative;height:var(--cal-cell-h,90px);border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+.cal-cell{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative;height:var(--cal-cell-h,90px);border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
 /* today panel */
-.today-panel{padding:12px 16px 16px;border-top:1px solid var(--border)}
-.today-panel-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase}
 .today-evt-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
 .today-evt-item:last-child{border-bottom:none}
 .today-evt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -371,7 +372,10 @@ input,select,textarea{
           <button class="view-btn" id="vbtn-week" onclick="setView('week')">週</button>
           <button class="view-btn" id="vbtn-day" onclick="setView('day')">日</button>
         </div>
-        <button class="add-event-btn" onclick="openAddModal()"><i class="ti ti-plus" aria-hidden="true"></i>予定を追加</button>
+        <div class="cal-actions">
+          <button class="add-event-btn today-open-btn" onclick="openTodayModal()" aria-label="本日の予定" title="本日の予定"><i class="ti ti-calendar-event" aria-hidden="true"></i><span class="btn-lbl">本日の予定</span></button>
+          <button class="add-event-btn" onclick="openAddModal()"><i class="ti ti-plus" aria-hidden="true"></i>予定を追加</button>
+        </div>
       </div>
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="navBack()"><i class="ti ti-chevron-left"></i></button>
@@ -389,7 +393,6 @@ input,select,textarea{
           <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div>
         </div>
         <div class="cal-body-month" id="cal-body-month" style="margin:0 4px"></div>
-        <div class="today-panel" id="today-panel"></div>
       </div>
 
       <!-- Weekly view -->
@@ -538,6 +541,19 @@ input,select,textarea{
   </div>
 </div>
 
+<!-- ══ TODAY EVENTS MODAL (本日の予定) ══ -->
+<div class="modal-overlay" id="today-modal">
+  <div class="modal-sheet">
+    <div class="modal-sheet-inner">
+      <div class="modal-title" id="today-modal-title">本日の予定</div>
+      <div id="today-modal-list"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTodayModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ EVENT DETAIL MODAL ══ -->
 <div class="modal-overlay" id="detail-modal">
   <div class="detail-sheet">
@@ -622,7 +638,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.7.0';
+const VERSION = 'ver.1.8.0';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -875,16 +891,16 @@ function confirmDateJump() {
 /* ══════════════════════════
    MONTHLY VIEW
 ══════════════════════════ */
-/* 6週の月でもスクロールなしで収まるよう、画面の高さに合わせてセルの高さを決める(64〜100px) */
+/* 6週の月でもスクロールなしで収まるよう、画面の高さに合わせてセルの高さを決める(52〜100px) */
 function fitMonthCells(rows) {
   const body = document.getElementById('cal-body-month');
   if (body.offsetParent !== null) {                     // 表示中のときだけ測れる
     const top = body.getBoundingClientRect().top + window.scrollY;
     const pb = parseFloat(getComputedStyle(document.querySelector('.app')).paddingBottom) || 0;
-    const avail = window.innerHeight - top - 8 - pb;
-    calCellH = Math.max(64, Math.min(100, Math.floor(avail / rows)));
+    const avail = window.innerHeight - top - 4 - pb;
+    calCellH = Math.max(52, Math.min(100, Math.floor(avail / rows)));
   }
-  monthPillMax = calCellH >= 86 ? 3 : 2;
+  monthPillMax = calCellH >= 86 ? 3 : calCellH >= 64 ? 2 : 1;
   body.style.setProperty('--cal-cell-h', calCellH + 'px');
 }
 
@@ -919,21 +935,20 @@ function renderMonth() {
     h += monthCell(i, k, true);
   }
   document.getElementById('cal-body-month').innerHTML = h;
-  renderTodayPanel();
 }
 
-function renderTodayPanel() {
+function renderTodayList() {
   const todayStr = fmt(TODAY);
   const todayEvts = eventsOn(todayStr);
-  const panel = document.getElementById('today-panel');
-  if (!panel) return;
+  const list = document.getElementById('today-modal-list');
+  document.getElementById('today-modal-title').textContent = '本日の予定' + (todayEvts.length ? ' (' + todayEvts.length + '件)' : '');
   if (!todayEvts.length) {
-    panel.innerHTML = `<div class="today-panel-title">本日の予定</div><div class="today-empty">本日の予定はありません</div>`;
+    list.innerHTML = `<div class="today-empty">本日の予定はありません</div>`;
     return;
   }
-  const items = todayEvts.map(e => {
+  list.innerHTML = todayEvts.map(e => {
     const timeStr = e.start ? e.start + (e.end ? ' 〜 ' + e.end : '') : '終日';
-    return `<div class="today-evt-item" onclick="showDetail('${e.id}','${todayStr}')">
+    return `<div class="today-evt-item" onclick="openTodayEvent('${e.id}')">
       <div class="today-evt-dot" style="background:${e.color}"></div>
       <div class="today-evt-info">
         <div class="today-evt-title">${escHtml(e.title)}</div>
@@ -941,7 +956,21 @@ function renderTodayPanel() {
       </div>
     </div>`;
   }).join('');
-  panel.innerHTML = `<div class="today-panel-title">本日の予定 (${todayEvts.length}件)</div>${items}`;
+}
+
+/* 本日の予定のポップアップ(予定追加と同じボトムシート形式)。開き方: 「本日の予定」ボタン / 今日のマスの長押し */
+function openTodayModal() {
+  renderTodayList();
+  lockScroll();
+  document.getElementById('today-modal').classList.add('open');
+}
+function closeTodayModal() {
+  document.getElementById('today-modal').classList.remove('open');
+  unlockScroll();
+}
+function openTodayEvent(id) {
+  closeTodayModal();
+  showDetail(id, fmt(TODAY));
 }
 
 function monthCell(d, k, other, extra='') {
@@ -960,7 +989,9 @@ function monthCell(d, k, other, extra='') {
   </div>`;
 }
 
+let calSuppressClick = false;   // 長押しでポップアップを開いた直後のクリックを無視する
 function onMonthDayClick(k) {
+  if (calSuppressClick) return;
   calCursor = parseDateStr(k);
   setView('day');
 }
@@ -1461,6 +1492,9 @@ document.getElementById('event-modal').addEventListener('click', function(e){
 });
 document.getElementById('detail-modal').addEventListener('click', function(e){
   if (e.target === this) closeDetail();
+});
+document.getElementById('today-modal').addEventListener('click', function(e){
+  if (e.target === this) closeTodayModal();
 });
 document.getElementById('diary-edit-modal').addEventListener('click', function(e){
   if (e.target === this) closeDiaryEdit();
@@ -2378,6 +2412,31 @@ Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', l
 
 initNotifications();
 setView('month');
+
+/* 今日のマスを長押し(0.5秒)すると「本日の予定」のポップアップを開く */
+(function() {
+  const body = document.getElementById('cal-body-month');
+  let timer = null, sx = 0, sy = 0;
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  body.addEventListener('pointerdown', e => {
+    if (!e.target.closest('.cal-cell.today')) return;
+    sx = e.clientX; sy = e.clientY;
+    cancel();
+    timer = setTimeout(() => {
+      timer = null;
+      calSuppressClick = true;
+      setTimeout(() => { calSuppressClick = false; }, 600);
+      openTodayModal();
+    }, 500);
+  });
+  body.addEventListener('pointermove', e => {
+    if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) cancel();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => body.addEventListener(n, cancel));
+  body.addEventListener('contextmenu', e => {
+    if (e.target.closest('.cal-cell.today')) e.preventDefault();
+  });
+})();
 
 /* 月表示のセルの高さを測り直す(幅が変わったとき・向きが変わったとき・フォント読み込み後)。
    高さだけの変化(iOSのツールバーの出入り)では測り直さない: スクロール中に表示がずれるため */
