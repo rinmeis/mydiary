@@ -679,7 +679,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.2';
+const VERSION = 'ver.1.8.3';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -802,7 +802,17 @@ function dismissNotifBanner() {
   document.getElementById('notif-banner').classList.remove('show');
 }
 
+/* リマインダーの予約。予約(タイマー)は ここ1か所で管理し、呼ぶたびに全部を取り消して作り直す。
+   → 予定の保存・変更・削除・インポートのあとに呼べば、二重の予約や、削除・変更前の予約が残らない */
+const reminderTimers = new Map();   // キー: 予定ID_日付 → setTimeout のID
+
+function cancelReminders() {
+  reminderTimers.forEach(id => clearTimeout(id));
+  reminderTimers.clear();
+}
+
 function scheduleReminders() {
+  cancelReminders();
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const now = new Date();
 
@@ -825,15 +835,21 @@ function scheduleReminders() {
 
       if (delay > 0 && delay < 48 * 60 * 60 * 1000) {
         const key = 'notif_' + evt.id + '_' + dStr;
-        if (!sessionStorage.getItem(key)) {
-          setTimeout(() => {
-            const timeLabel = reminderMin > 0 ? reminderMin + '分後に開始' : '開始時刻です';
-            new Notification('📅 ' + evt.title, {
-              body: dayLabel(dStr) + ' ' + evt.start + '\n' + timeLabel,
-            });
-            sessionStorage.setItem(key, '1');
-          }, delay);
-        }
+        if (sessionStorage.getItem(key)) continue;
+        const timerId = setTimeout(() => {
+          reminderTimers.delete(key);
+          // 念のため: 予定がまだあり、開始時刻と通知の設定が同じときだけ通知する
+          const cur = events.find(e => e.id === evt.id);
+          if (!cur || cur.start !== evt.start || cur.reminder !== evt.reminder) return;
+          // 端末の停止などで大きく遅れたとき(開始から1分以上たっている)は通知しない
+          if (Date.now() - eventTime.getTime() > 60000) return;
+          const timeLabel = reminderMin > 0 ? reminderMin + '分後に開始' : '開始時刻です';
+          new Notification('📅 ' + evt.title, {
+            body: dayLabel(dStr) + ' ' + evt.start + '\n' + timeLabel,
+          });
+          sessionStorage.setItem(key, '1');
+        }, delay);
+        reminderTimers.set(key, timerId);
       }
     }
   });
@@ -1519,6 +1535,7 @@ function deleteEventFromDetail() {
   if (!detailId) return;
   events = events.filter(e => e.id !== detailId);
   persist();
+  scheduleReminders();
   closeDetail();
   renderCurrentView();
 }
@@ -1674,6 +1691,8 @@ function importData(input) {
       if (Array.isArray(data.tasks))   Tasks.setTasks(data.tasks);
       if (data.taskOptions && typeof data.taskOptions === 'object') Tasks.setOptions(data.taskOptions);
       persist();
+      scheduleReminders();
+      diarySeenMonths = null; diaryOpenMonths = new Set();   // 日記の月の開閉をやり直す
       renderCurrentView();
       closeSettings();
       alert('インポートが完了しました');
@@ -1725,10 +1744,10 @@ function renderDiary() {
 }
 
 /* 日記の一覧だけを描き直す(今日の入力欄には触れない=書きかけを消さない) */
-let diaryOpenMonths = null;   // 開いている月('YYYY-MM')。最初は最新の月だけ開く(画面を開いている間だけ保持)
+let diaryOpenMonths = new Set();   // 開いている月('YYYY-MM')。最初は最新の月だけ開く(画面を開いている間だけ保持)
+let diarySeenMonths = null;        // これまでに一覧に出た月。初めて出る月(最初の日記・月が替わった最初の日記など)は自動で開く
 function renderDiaryList() {
   const keys = Object.keys(diaries).sort().reverse();
-  if (diaryOpenMonths === null) diaryOpenMonths = new Set(keys.length ? [keys[0].slice(0, 7)] : []);
   const groups = [];
   keys.forEach(key => {
     const ym = key.slice(0, 7);
@@ -1736,6 +1755,11 @@ function renderDiaryList() {
     if (!g || g.ym !== ym) { g = { ym, keys: [] }; groups.push(g); }
     g.keys.push(key);
   });
+  if (diarySeenMonths === null) {
+    if (groups.length) { diarySeenMonths = new Set(groups.map(g => g.ym)); diaryOpenMonths = new Set([groups[0].ym]); }
+  } else {
+    groups.forEach(g => { if (!diarySeenMonths.has(g.ym)) { diarySeenMonths.add(g.ym); diaryOpenMonths.add(g.ym); } });
+  }
   const card = key => `<div class="entry-card" onclick="openDiaryView('${key}')">
         <div class="entry-card-top">
           <div class="entry-date">${dayLabel(key)}</div>
@@ -1845,6 +1869,7 @@ function saveDiary() {
   if (!text) return;
   diaries[fmt(TODAY)] = { text, saved: new Date().toISOString() };
   persist();
+  diaryOpenMonths.add(fmt(TODAY).slice(0, 7));
   renderDiary();
   const btn = document.getElementById('diary-btn');
   btn.textContent = '保存しました ✓';
@@ -2563,6 +2588,7 @@ setInterval(() => {
 Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', optionsKey: 'md_task_opts', lockScroll, unlockScroll });
 
 initNotifications();
+setInterval(scheduleReminders, 30 * 60 * 1000);   // 開いたままでも、翌日分の予約が入るように
 setView('month');
 
 /* 今日のマスを長押し(0.5秒)すると「本日の予定」のポップアップを開く */
