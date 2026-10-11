@@ -236,14 +236,21 @@ input,select,textarea{
 .save-btn:active{opacity:.75}
 .section{margin-top:18px;padding-top:14px;border-top:0.5px solid var(--border)}
 .section-title{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase}
-.entry-card{background:var(--bg2);border-radius:var(--r);padding:11px 13px;margin-bottom:8px}
+.entry-card{background:var(--bg2);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;cursor:pointer}
+.entry-card:active{background:var(--bg3)}
 .entry-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .entry-date{font-size:11px;color:var(--text2)}
 .entry-actions{display:flex;gap:2px;flex-shrink:0}
 .entry-act-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 6px;font-size:15px;border-radius:6px;line-height:1;display:flex;align-items:center;min-width:28px;min-height:28px;justify-content:center}
 .entry-act-btn:active{background:var(--bg3)}
 .entry-del-btn{color:var(--red)}
-.entry-preview{font-size:13px;line-height:1.55;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.entry-preview{font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:calc(1.55em * 3);overflow:hidden}
+.entry-more{font-size:11px;color:var(--blue);text-align:right;margin-top:2px}
+.diary-month{margin-bottom:4px}
+.diary-month-head{display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;padding:9px 2px;font-family:inherit;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
+.diary-month-head i{font-size:15px;color:var(--text2)}
+.diary-month-head .dm-count{margin-left:auto;font-size:11px;font-weight:400;color:var(--text2)}
+.diary-full{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;margin-bottom:4px}
 .empty-msg{text-align:center;color:var(--text3);font-size:13px;padding:28px 0}
 
 /* ══ MEMO ══ */
@@ -419,7 +426,7 @@ input,select,textarea{
       <textarea class="diary-textarea" id="diary-text" rows="10" placeholder="今日はどんな一日でしたか？"></textarea>
       <button class="save-btn" id="diary-btn" onclick="saveDiary()">保存する</button>
       <div class="section">
-        <div class="section-title">最近の日記</div>
+        <div class="section-title">日記の一覧</div>
         <div id="diary-list"></div>
       </div>
     </div>
@@ -639,6 +646,21 @@ input,select,textarea{
   </div>
 </div>
 
+<!-- ══ DIARY VIEW MODAL (日記の全文) ══ -->
+<div class="modal-overlay" id="diary-view-modal">
+  <div class="modal-sheet">
+    <div class="modal-sheet-inner">
+      <div class="modal-title" id="diary-view-date"></div>
+      <div class="diary-full" id="diary-view-text"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeDiaryView()">閉じる</button>
+        <button class="btn-delete" onclick="deleteDiaryFromView()">削除</button>
+        <button class="btn-save" onclick="editDiaryFromView()">編集</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DIARY EDIT MODAL ══ -->
 <div class="modal-overlay" id="diary-edit-modal">
   <div class="modal-sheet">
@@ -657,7 +679,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.1';
+const VERSION = 'ver.1.8.2';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1512,6 +1534,9 @@ document.getElementById('event-modal').addEventListener('click', function(e){
 document.getElementById('detail-modal').addEventListener('click', function(e){
   if (e.target === this) closeDetail();
 });
+document.getElementById('diary-view-modal').addEventListener('click', function(e){
+  if (e.target === this) closeDiaryView();
+});
 document.getElementById('today-modal').addEventListener('click', function(e){
   if (e.target === this) closeTodayModal();
 });
@@ -1696,19 +1721,86 @@ function renderDiary() {
   const k = fmt(TODAY);
   document.getElementById('diary-date-label').textContent = dayLabel(k);
   document.getElementById('diary-text').value = (diaries[k]||{}).text || '';
-  const keys = Object.keys(diaries).sort().reverse().slice(0, 7);
-  document.getElementById('diary-list').innerHTML = keys.length
-    ? keys.map(key => `<div class="entry-card">
+  renderDiaryList();
+}
+
+/* 日記の一覧だけを描き直す(今日の入力欄には触れない=書きかけを消さない) */
+let diaryOpenMonths = null;   // 開いている月('YYYY-MM')。最初は最新の月だけ開く(画面を開いている間だけ保持)
+function renderDiaryList() {
+  const keys = Object.keys(diaries).sort().reverse();
+  if (diaryOpenMonths === null) diaryOpenMonths = new Set(keys.length ? [keys[0].slice(0, 7)] : []);
+  const groups = [];
+  keys.forEach(key => {
+    const ym = key.slice(0, 7);
+    let g = groups[groups.length - 1];
+    if (!g || g.ym !== ym) { g = { ym, keys: [] }; groups.push(g); }
+    g.keys.push(key);
+  });
+  const card = key => `<div class="entry-card" onclick="openDiaryView('${key}')">
         <div class="entry-card-top">
           <div class="entry-date">${dayLabel(key)}</div>
           <div class="entry-actions">
-            <button class="entry-act-btn" onclick="editDiaryEntry('${key}')" title="編集"><i class="ti ti-edit"></i></button>
-            <button class="entry-act-btn entry-del-btn" onclick="deleteDiaryEntry('${key}')" title="削除"><i class="ti ti-trash"></i></button>
+            <button class="entry-act-btn" onclick="event.stopPropagation();editDiaryEntry('${key}')" title="編集"><i class="ti ti-edit"></i></button>
+            <button class="entry-act-btn entry-del-btn" onclick="event.stopPropagation();deleteDiaryEntry('${key}')" title="削除"><i class="ti ti-trash"></i></button>
           </div>
         </div>
-        <div class="entry-preview">${escHtml(diaries[key].text)}</div>
-      </div>`).join('')
+        <div class="entry-preview">${escHtml((diaries[key] || {}).text || '')}</div>
+      </div>`;
+  document.getElementById('diary-list').innerHTML = groups.length
+    ? groups.map(g => {
+        const open = diaryOpenMonths.has(g.ym);
+        const [y, m] = g.ym.split('-');
+        return `<div class="diary-month">
+        <button class="diary-month-head" onclick="toggleDiaryMonth('${g.ym}')" aria-expanded="${open}"><i class="ti ti-chevron-${open ? 'down' : 'right'}" aria-hidden="true"></i>${y}年${parseInt(m)}月<span class="dm-count">${g.keys.length}件</span></button>
+        ${open ? g.keys.map(card).join('') : ''}
+      </div>`;
+      }).join('')
     : `<p class="empty-msg">まだ日記がありません</p>`;
+  markDiaryOverflow();
+}
+
+function toggleDiaryMonth(ym) {
+  if (diaryOpenMonths.has(ym)) diaryOpenMonths.delete(ym); else diaryOpenMonths.add(ym);
+  renderDiaryList();
+}
+
+/* 3行に入りきらない日記には「全文を読む ›」を付ける(表示中でないと測れないので、表示のたびに呼ぶ) */
+function markDiaryOverflow() {
+  document.querySelectorAll('#diary-list .entry-more').forEach(e => e.remove());
+  document.querySelectorAll('#diary-list .entry-preview').forEach(el => {
+    if (el.scrollHeight > el.clientHeight + 1) el.insertAdjacentHTML('afterend', '<div class="entry-more">全文を読む ›</div>');
+  });
+}
+window.addEventListener('resize', () => {
+  if (document.getElementById('screen-diary').classList.contains('active')) markDiaryOverflow();
+});
+
+/* 日記の全文のポップアップ(予定の詳細と同じ並びのボタン) */
+let diaryViewKey = null;
+function openDiaryView(key) {
+  const e = diaries[key];
+  if (!e) return;
+  diaryViewKey = key;
+  document.getElementById('diary-view-date').textContent = dayLabel(key);
+  document.getElementById('diary-view-text').textContent = e.text || '';
+  lockScroll();
+  document.getElementById('diary-view-modal').classList.add('open');
+}
+function closeDiaryView() {
+  document.getElementById('diary-view-modal').classList.remove('open');
+  unlockScroll();
+  diaryViewKey = null;
+}
+function editDiaryFromView() {
+  const k = diaryViewKey;
+  closeDiaryView();
+  if (k) editDiaryEntry(k);
+}
+function deleteDiaryFromView() {
+  const k = diaryViewKey;
+  if (!k) return;
+  deleteDiaryEntry(k);                   // 確認ダイアログつき。やめた場合は日記が残るので、ポップアップも残す
+  if (!diaries[k]) closeDiaryView();
 }
 
 let diaryEditKey = null;
@@ -1738,14 +1830,14 @@ function saveDiaryEdit() {
   diaries[diaryEditKey] = { text, saved: new Date().toISOString() };
   persist();
   closeDiaryEdit();
-  renderDiary();
+  renderDiaryList();
 }
 
 function deleteDiaryEntry(key) {
   if (!confirm(dayLabel(key) + 'の日記を削除しますか？')) return;
   delete diaries[key];
   persist();
-  renderDiary();
+  if (key === fmt(TODAY)) renderDiary(); else renderDiaryList();
 }
 
 function saveDiary() {
