@@ -593,6 +593,25 @@ input,select,textarea{
     <div class="modal-sheet-inner">
       <div class="modal-title">設定</div>
       <div class="settings-section">
+        <div class="settings-section-title">タスクの区切り</div>
+        <div class="toggle-row">
+          <label class="form-label" style="margin-bottom:0">「○日後まで」の区切りを表示</label>
+          <div class="toggle-switch" id="near-toggle" onclick="toggleNearOn()" role="switch" aria-checked="true" aria-label="「○日後まで」の区切りを表示"><div class="toggle-thumb"></div></div>
+        </div>
+        <div class="form-row" id="near-days-row" style="margin:12px 0 0">
+          <label class="form-label" for="near-days-sel">日数</label>
+          <select class="form-select" id="near-days-sel" onchange="changeNearDays(this.value)">
+            <option value="1">明日まで</option>
+            <option value="2">2日後まで</option>
+            <option value="3">3日後まで</option>
+            <option value="4">4日後まで</option>
+            <option value="5">5日後まで</option>
+            <option value="6">6日後まで</option>
+          </select>
+        </div>
+        <div id="near-hint" style="font-size:11px;color:var(--text2);margin-top:8px"></div>
+      </div>
+      <div class="settings-section">
         <div class="settings-section-title">データ管理</div>
         <button class="settings-btn" onclick="exportData()"><i class="ti ti-download"></i>データをエクスポート（JSON）</button>
         <button class="settings-btn" onclick="document.getElementById('import-file').click()"><i class="ti ti-upload"></i>データをインポート（JSON）</button>
@@ -638,7 +657,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.0';
+const VERSION = 'ver.1.8.1';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1578,7 +1597,24 @@ function onSearchInput() {
 /* ══════════════════════════
    SETTINGS / EXPORT / IMPORT
 ══════════════════════════ */
+/* タスクの区切りの設定(「○日後まで」の表示と日数)。変更はすぐタスク一覧に反映される */
+function syncTaskSettings() {
+  const o = Tasks.getOptions();
+  const tg = document.getElementById('near-toggle');
+  tg.classList.toggle('on', o.nearOn);
+  tg.setAttribute('aria-checked', String(o.nearOn));
+  document.getElementById('near-days-sel').value = String(o.nearDays);
+  document.getElementById('near-days-row').style.display = o.nearOn ? '' : 'none';
+  const hint = document.getElementById('near-hint');
+  if (!o.nearOn) { hint.textContent = '一覧では「今日まで」の次は「来週まで」になります'; return; }
+  const d = new Date(); d.setDate(d.getDate() + o.nearDays);
+  hint.textContent = '一覧では「' + (o.nearDays === 1 ? '明日まで' : o.nearDays + '日後まで') + ' (' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ')」のように表示されます';
+}
+function toggleNearOn() { Tasks.setOptions({ nearOn: !Tasks.getOptions().nearOn }); syncTaskSettings(); }
+function changeNearDays(v) { Tasks.setOptions({ nearDays: Number(v) }); syncTaskSettings(); }
+
 function openSettings() {
+  syncTaskSettings();
   lockScroll();
   document.getElementById('settings-modal').classList.add('open');
 }
@@ -1589,7 +1625,7 @@ function closeSettings() {
 }
 
 function exportData() {
-  const data = { events, diaries, memos, tasks: Tasks.getTasks(), exportedAt: new Date().toISOString() };
+  const data = { events, diaries, memos, tasks: Tasks.getTasks(), taskOptions: Tasks.getOptions(), exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1611,6 +1647,7 @@ function importData(input) {
       if (data.diaries && typeof data.diaries === 'object') diaries = data.diaries;
       if (Array.isArray(data.memos))   memos   = data.memos;
       if (Array.isArray(data.tasks))   Tasks.setTasks(data.tasks);
+      if (data.taskOptions && typeof data.taskOptions === 'object') Tasks.setOptions(data.taskOptions);
       persist();
       renderCurrentView();
       closeSettings();
@@ -1829,15 +1866,16 @@ function delMemo(i) {
    TASKS (タスク管理 / tasks_ver.1.7.0.js を組み込み)
 ══════════════════════════ */
 /* ============================================================
-   tasks_ver.1.7.0.js  ― mydiary タスク管理機能(第4のタブ)
+   tasks_ver.1.8.1.js  ― mydiary タスク管理機能(第4のタブ)
    単体で動作する独立モジュール。mydiary本体にはまだ組み込まれていない。
 
    使い方:
-     Tasks.mount(document.getElementById('screen-tasks'), { storageKey:'md_tasks', lockScroll, unlockScroll });
+     Tasks.mount(document.getElementById('screen-tasks'), { storageKey:'md_tasks', optionsKey:'md_task_opts', lockScroll, unlockScroll });
      Tasks.render();   // タブを開くたびに呼ぶ(日付の区切りを最新にし、チェックして残しておいたタスクを片づける)
 
    依存: Tabler Icons(ti-*)、本体のCSS変数(--bg,--text,--green,--red 等。無ければ代替色)
-   保存: localStorage の storageKey(既定 'md_tasks')。他のデータには触れない。
+   保存: localStorage の storageKey(既定 'md_tasks')と optionsKey(既定 'md_task_opts'。区切りの設定)。他のデータには触れない。
+   区切りの設定: { nearOn: 「○日後まで」を表示するか(既定 true), nearDays: 日数 1〜6(既定 3) }
 ============================================================ */
 const Tasks = (() => {
   'use strict';
@@ -1846,7 +1884,7 @@ const Tasks = (() => {
   const REP = { none: 'なし', daily: '毎日', weekly: '毎週', monthly: '毎月' };
   const DOW = ['日', '月', '火', '水', '木', '金', '土'];
   const GROUPS = [
-    ['over', '期限超過'], ['today', '今日まで'], ['week', '来週まで'],
+    ['over', '期限超過'], ['today', '今日まで'], ['near', '○日後まで'], ['week', '来週まで'],
     ['month', '今月まで'], ['later', 'それ以降'], ['none', '期限なし']
   ];
 
@@ -1854,6 +1892,8 @@ const Tasks = (() => {
   let root = null;
   let tasks = [];
   let storageKey = 'md_tasks';
+  let optsKey = 'md_task_opts';
+  let cfg = { nearOn: true, nearDays: 3 };   // 区切りの設定(「○日後まで」の表示と日数)
   let nowFn = () => new Date();
   let view = 'main';          // 'main' | 'done' | 'nodue'
   let selMode = false;
@@ -1892,6 +1932,19 @@ const Tasks = (() => {
     try { localStorage.setItem(storageKey, JSON.stringify(tasks)); } catch (e) {}
   }
 
+  /* ── 区切りの設定 ── */
+  function sanitizeOpts(o) {
+    const n = Math.round(Number(o && o.nearDays));
+    return { nearOn: !(o && o.nearOn === false), nearDays: n >= 1 && n <= 6 ? n : 3 };
+  }
+  function loadOpts() {
+    try { cfg = sanitizeOpts(JSON.parse(localStorage.getItem(optsKey) || 'null')); }
+    catch (e) { cfg = sanitizeOpts(null); }
+  }
+  function saveOpts() {
+    try { localStorage.setItem(optsKey, JSON.stringify(cfg)); } catch (e) {}
+  }
+
   /* ── 繰り返し ── */
   function stepDue(d, rep, anchorDay) {
     if (rep === 'daily') return addDays(d, 1);
@@ -1917,7 +1970,8 @@ const Tasks = (() => {
     const wk = addDays(today, 7);
     const mEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     const showMonth = wk.getMonth() === today.getMonth();   // 来週が来月なら「今月まで」を省略
-    return { today, wk, mEnd, showMonth };
+    const near = addDays(today, cfg.nearDays);
+    return { today, near, nearOn: cfg.nearOn, wk, mEnd, showMonth };
   }
   function groupOf(t, now, gi) {
     if (!t.due) return 'none';
@@ -1925,6 +1979,7 @@ const Tasks = (() => {
     if (d < now) return 'over';
     const dDay = startOfDay(d);
     if (+dDay === +gi.today) return 'today';
+    if (gi.nearOn && dDay <= gi.near) return 'near';        // 明日〜○日後
     if (dDay <= gi.wk) return 'week';
     if (gi.showMonth && dDay <= gi.mEnd) return 'month';
     return 'later';
@@ -1932,6 +1987,7 @@ const Tasks = (() => {
   function groupLabel(key, gi) {
     const base = GROUPS.find(g => g[0] === key)[1];
     if (key === 'today') return base + ' (' + slash(gi.today) + ')';
+    if (key === 'near') return (cfg.nearDays === 1 ? '明日まで' : cfg.nearDays + '日後まで') + ' (' + slash(gi.near) + ')';
     if (key === 'week') return base + ' (' + slash(gi.wk) + ')';
     if (key === 'month') return base + ' (' + slash(gi.mEnd) + ')';
     return base;
@@ -2348,6 +2404,7 @@ const Tasks = (() => {
     opts = opts || {};
     root = el;
     if (opts.storageKey) storageKey = opts.storageKey;
+    if (opts.optionsKey) optsKey = opts.optionsKey;
     if (opts.now) nowFn = opts.now;
     hooks = { lock: opts.lockScroll, unlock: opts.unlockScroll };
     if (!document.getElementById('tk-style')) {
@@ -2361,6 +2418,7 @@ const Tasks = (() => {
     q('#tk-f-date').addEventListener('change', syncForm);
     q('#tk-f-title').addEventListener('input', () => { q('#tk-err').textContent = ''; });
     q('#tk-f-title').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveSheet(); } });
+    loadOpts();
     load();
     refresh();
     document.addEventListener('visibilitychange', () => {   // アプリを閉じる/別アプリへ移るときも片づける
@@ -2392,6 +2450,8 @@ const Tasks = (() => {
     setNow(fn) { nowFn = fn || (() => new Date()); render(); },
     getTasks() { return tasks; },
     pendingByDate,
+    getOptions() { return { nearOn: cfg.nearOn, nearDays: cfg.nearDays }; },
+    setOptions(o) { cfg = sanitizeOpts(Object.assign({}, cfg, o)); saveOpts(); refresh(); },
     setTasks(a) { tasks = a; save(); render(); },
     reload() { load(); render(); }
   };
@@ -2408,7 +2468,7 @@ setInterval(() => {
   renderCurrentView();
 }, 60000);
 
-Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', lockScroll, unlockScroll });
+Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', optionsKey: 'md_task_opts', lockScroll, unlockScroll });
 
 initNotifications();
 setView('month');
