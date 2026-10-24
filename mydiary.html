@@ -679,7 +679,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.3';
+const VERSION = 'ver.1.8.4';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1983,15 +1983,16 @@ function delMemo(i) {
    TASKS (タスク管理 / tasks_ver.1.7.0.js を組み込み)
 ══════════════════════════ */
 /* ============================================================
-   tasks_ver.1.8.1.js  ― mydiary タスク管理機能(第4のタブ)
+   tasks_ver.1.8.4.js  ― mydiary タスク管理機能(第4のタブ)
    単体で動作する独立モジュール。mydiary本体にはまだ組み込まれていない。
 
    使い方:
-     Tasks.mount(document.getElementById('screen-tasks'), { storageKey:'md_tasks', optionsKey:'md_task_opts', lockScroll, unlockScroll });
+     Tasks.mount(document.getElementById('screen-tasks'), { storageKey:'md_tasks', optionsKey:'md_task_opts', colors: EVENT_COLORS, lockScroll, unlockScroll });
      Tasks.render();   // タブを開くたびに呼ぶ(日付の区切りを最新にし、チェックして残しておいたタスクを片づける)
 
    依存: Tabler Icons(ti-*)、本体のCSS変数(--bg,--text,--green,--red 等。無ければ代替色)
    保存: localStorage の storageKey(既定 'md_tasks')と optionsKey(既定 'md_task_opts'。区切りの設定)。他のデータには触れない。
+   色: タスクごとに color(予定の追加と同じ8色の hex)。未設定・不正な値は初期色のグレーとして扱う。
    区切りの設定: { nearOn: 「○日後まで」を表示するか(既定 true), nearDays: 日数 1〜6(既定 3) }
 ============================================================ */
 const Tasks = (() => {
@@ -2005,6 +2006,16 @@ const Tasks = (() => {
     ['month', '今月まで'], ['later', 'それ以降'], ['none', '期限なし']
   ];
 
+  /* ── 色(予定の追加と同じ8色。mount の colors で本体の EVENT_COLORS を受け取る) ── */
+  const PALETTE_DEFAULT = [
+    { name: 'ピンク', hex: '#ffb3c6' }, { name: 'オレンジ', hex: '#ffd4a8' }, { name: '黄', hex: '#fff0a3' },
+    { name: 'ミント', hex: '#a8e6cf' }, { name: 'スカイ', hex: '#a8d8f0' }, { name: 'ラベンダー', hex: '#c5b8f5' },
+    { name: 'ライラック', hex: '#e8b8e8' }, { name: 'グレー', hex: '#d4d2ce' }
+  ];
+  const DEFAULT_COLOR = '#d4d2ce';          // 初期色(グレー)
+  let palette = PALETTE_DEFAULT;
+  const okColor = c => (typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)) ? c : DEFAULT_COLOR;   // 不正な値は初期色に直す(styleに入れるため)
+
   /* ── 状態 ── */
   let root = null;
   let tasks = [];
@@ -2016,7 +2027,7 @@ const Tasks = (() => {
   let selMode = false;
   let sel = new Set();
   let editingId = null;       // null = 新規
-  let form = { hasDue: true, repeat: 'none' };
+  let form = { hasDue: true, repeat: 'none', color: DEFAULT_COLOR };
   let hooks = {};             // 本体のスクロール固定などを呼ぶための任意フック {lock, unlock}
   let held = new Set();       // チェック済みだが、画面を切り替えるまでその場に残すタスクのID
 
@@ -2120,7 +2131,7 @@ const Tasks = (() => {
     if (t.repeat !== 'none' && t.due) {
       const n = {
         id: uid(), title: t.title, due: toIso(nextDue(t, now)), repeat: t.repeat,
-        anchorDay: t.anchorDay, done: false, doneAt: null, nextId: null, createdAt: now.getTime()
+        anchorDay: t.anchorDay, color: okColor(t.color), done: false, doneAt: null, nextId: null, createdAt: now.getTime()
       };
       tasks.push(n);
       t.nextId = n.id;
@@ -2169,7 +2180,7 @@ const Tasks = (() => {
       sub = key === 'today' ? hm(d) : slash(d) + ' ' + hm(d);
     }
     const isHeld = held.has(t.id);
-    return '<div class="tk-row">' +
+    return '<div class="tk-row"><span class="tk-cbar" style="background:' + okColor(t.color) + '"></span>' +
       '<button class="tk-chk' + (isHeld ? ' on' : '') + '" data-act="' + (isHeld ? 'uncheck' : 'check') + '" data-id="' + t.id + '" aria-label="' + (isHeld ? '未完了に戻す' : '完了にする') + '">' +
       (isHeld ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') + '</button>' +
       '<div class="tk-body"' + (isHeld ? '' : ' data-act="edit" data-id="' + t.id + '"') + '>' +
@@ -2237,6 +2248,7 @@ const Tasks = (() => {
       const checked = sel.has(t.id);
       const subTxt = t.due ? '期限 ' + slash(parseIso(t.due)) + ' ' + hm(parseIso(t.due)) : '期限なし';
       h += '<div class="tk-row" ' + (selMode ? 'data-act="toggle-sel" data-id="' + t.id + '"' : '') + '>' +
+        '<span class="tk-cbar" style="background:' + okColor(t.color) + '"></span>' +
         (selMode
           ? '<span class="tk-chk sq' + (checked ? ' on dark' : '') + '">' + (checked ? '<i class="ti ti-check" aria-hidden="true"></i>' : '') + '</span>'
           : '<button class="tk-chk on" data-act="restore" data-id="' + t.id + '" aria-label="未完了に戻す"><i class="ti ti-check" aria-hidden="true"></i></button>') +
@@ -2280,6 +2292,7 @@ const Tasks = (() => {
     const d = t && t.due ? parseIso(t.due) : defaultDue();
     form.hasDue = t ? !!t.due : !(opts && opts.noDue);   // 期限なし画面からの追加は期限OFFで開く
     form.repeat = t ? t.repeat : 'none';
+    form.color = t ? okColor(t.color) : DEFAULT_COLOR;
     q('#tk-f-title').value = t ? t.title : '';
     q('#tk-f-date').value = ymd(d);
     q('#tk-f-time').value = p2(d.getHours()) + ':' + p2(d.getMinutes());
@@ -2310,6 +2323,9 @@ const Tasks = (() => {
       if (form.repeat === 'monthly') hint = '毎月' + dd + '日に繰り返します' + (dd > 28 ? '(日数が足りない月は月末)' : '');
     }
     q('#tk-hint').textContent = hint;
+    q('#tk-cr').innerHTML = palette.map(c =>
+      '<button type="button" class="tk-cs' + (c.hex === form.color ? ' sel' : '') + '" style="background:' + c.hex +
+      '" data-act="color" data-color="' + c.hex + '" title="' + c.name + '" aria-label="' + c.name + '"></button>').join('');
   }
   function saveSheet() {
     const title = q('#tk-f-title').value.trim();
@@ -2326,10 +2342,10 @@ const Tasks = (() => {
     }
     if (editingId) {
       const t = tasks.find(x => x.id === editingId);
-      t.title = title; t.due = due; t.repeat = repeat; t.anchorDay = anchorDay;
+      t.title = title; t.due = due; t.repeat = repeat; t.anchorDay = anchorDay; t.color = form.color;
     } else {
       tasks.push({
-        id: uid(), title, due, repeat, anchorDay,
+        id: uid(), title, due, repeat, anchorDay, color: form.color,
         done: false, doneAt: null, nextId: null, createdAt: nowFn().getTime()
       });
     }
@@ -2384,6 +2400,7 @@ const Tasks = (() => {
       }
       case 'sw': form.hasDue = !form.hasDue; syncForm(); break;
       case 'rep': form.repeat = el.dataset.rep; syncForm(); break;
+      case 'color': form.color = okColor(el.dataset.color); syncForm(); break;
       case 'sheet-cancel': closeSheet(); break;
       case 'sheet-save': saveSheet(); break;
       case 'sheet-delete': deleteFromSheet(); break;
@@ -2408,7 +2425,7 @@ const Tasks = (() => {
 .tk-pillw{display:flex;justify-content:center;padding:14px 0 4px}
 .tk-pill{font-size:11px;color:#fff;background:#8a8a85;border-radius:12px;padding:3px 12px}
 .tk-pill.red{background:var(--red,#e24b4a)}
-.tk-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09))}
+.tk-row{position:relative;display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09))}
 .tk-chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--text3,#aaa);background:none;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;padding:0;cursor:pointer;transition:background .15s,border-color .15s}
 .tk-chk.on{background:var(--green,#1d9e75);border-color:var(--green,#1d9e75)}
 .tk-chk.sq{border-radius:7px}
@@ -2461,6 +2478,10 @@ const Tasks = (() => {
 .tk-hint{font-size:11px;color:#185FA5;margin-top:5px;min-height:14px}
 .tk-err{font-size:12px;color:var(--red,#e24b4a);margin-top:8px;min-height:16px}
 .tk-actions{display:flex;gap:8px;margin-top:8px}
+.tk-cbar{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:0 3px 3px 0}
+.tk-cr{display:flex;gap:9px;flex-wrap:wrap;padding:2px 0}
+.tk-cs{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:all .2s}
+.tk-cs.sel{border-color:var(--text,#1a1a1a);transform:scale(1.15)}
 `;
 
   const HTML = `
@@ -2507,6 +2528,8 @@ const Tasks = (() => {
       </div>
       <div class="tk-hint" id="tk-hint"></div>
     </div>
+    <span class="tk-lb">カラー</span>
+    <div class="tk-cr" id="tk-cr"></div>
     <div class="tk-err" id="tk-err"></div>
     <div class="tk-actions">
       <button class="tk-btn red" data-act="sheet-delete">削除</button>
@@ -2522,6 +2545,7 @@ const Tasks = (() => {
     root = el;
     if (opts.storageKey) storageKey = opts.storageKey;
     if (opts.optionsKey) optsKey = opts.optionsKey;
+    if (Array.isArray(opts.colors) && opts.colors.length) palette = opts.colors;
     if (opts.now) nowFn = opts.now;
     hooks = { lock: opts.lockScroll, unlock: opts.unlockScroll };
     if (!document.getElementById('tk-style')) {
@@ -2585,7 +2609,7 @@ setInterval(() => {
   renderCurrentView();
 }, 60000);
 
-Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', optionsKey: 'md_task_opts', lockScroll, unlockScroll });
+Tasks.mount(document.getElementById('screen-tasks'), { storageKey: 'md_tasks', optionsKey: 'md_task_opts', colors: EVENT_COLORS, lockScroll, unlockScroll });
 
 initNotifications();
 setInterval(scheduleReminders, 30 * 60 * 1000);   // 開いたままでも、翌日分の予約が入るように
