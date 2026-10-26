@@ -15,7 +15,7 @@
   --bg:#fff;--bg2:#f6f6f2;--bg3:#eeecea;
   --text:#1a1a1a;--text2:#666;--text3:#aaa;
   --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.18);
-  --accent:#1a1a1a;--green:#1d9e75;--red:#e24b4a;--blue:#378add;--task:#534AB7;--today-frame:#7fd99a;
+  --accent:#1a1a1a;--green:#1d9e75;--red:#e24b4a;--blue:#378add;--task:#534AB7;--important:#D9730D;--today-frame:#7fd99a;
   --r:10px;--rl:16px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -117,12 +117,19 @@ input,select,textarea{
 /* タスクの残数・期限の線(カレンダー上) */
 .task-badge{position:absolute;right:2px;top:3px;min-width:15px;height:15px;box-sizing:border-box;border-radius:8px;border:1.3px solid var(--task);color:var(--task);background:var(--bg);font-size:9px;line-height:12px;text-align:center;font-weight:500;padding:0 2px;z-index:1}
 .task-badge.over{border-color:var(--red);color:var(--red)}
+.task-badge.imp{background:var(--important);border-color:var(--important);color:#fff}
+.task-badge.over.imp{background:var(--red);border-color:var(--red);color:#fff}
 .task-line{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--task);z-index:3;pointer-events:none}
 .task-line::before{content:'';position:absolute;left:-1px;top:-5px;width:7px;height:7px;border-radius:50%;background:var(--task)}
+.task-line.imp{border-top:3px solid var(--important)}
+.task-line.imp::before{background:var(--important);width:9px;height:9px;top:-6px}
 .day-task-line{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--task);z-index:4;pointer-events:none}
 .day-task-line::before{content:'';position:absolute;left:-1px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--task)}
+.day-task-line.imp{border-top:3px solid var(--important)}
+.day-task-line.imp::before{background:var(--important);width:10px;height:10px;top:-6px}
 .day-task-label{position:absolute;right:6px;top:-17px;max-width:75%;font-size:10px;line-height:15px;font-weight:500;color:var(--task);background:var(--bg);padding:0 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .day-task-label.below{top:3px}
+.day-task-label.imp{color:var(--important);font-weight:700}
 /* date jump */
 .date-jump-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s}
 .date-jump-overlay.open{opacity:1;pointer-events:all}
@@ -678,7 +685,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.5';
+const VERSION = 'ver.1.8.6';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1038,7 +1045,7 @@ function monthCell(d, k, other, extra='') {
   const diaryMark = diaries[k] ? `<div class="diary-dot"></div>` : '';
   const tk = taskDue[k] || [];
   const taskBadge = tk.length
-    ? `<span class="task-badge${tk.some(t => t.overdue) ? ' over' : ''}" aria-label="タスク${tk.length}件">${tk.length > 99 ? '99+' : tk.length}</span>` : '';
+    ? `<span class="task-badge${tk.some(t => t.overdue) ? ' over' : ''}${tk.some(t => t.important) ? ' imp' : ''}" aria-label="タスク${tk.length}件${tk.some(t => t.important) ? '(重要あり)' : ''}">${tk.length > 99 ? '99+' : tk.length}</span>` : '';
   const cls = ['cal-cell', other?'other':'', extra].filter(Boolean).join(' ');
   return `<div class="${cls}" onclick="onMonthDayClick('${k}')">
     <div class="dnum">${d}</div>${taskBadge}${pills}${moreDot}${diaryMark}
@@ -1129,7 +1136,7 @@ function renderWeek() {
       if (!cellEl) return;
       cellEl.style.position = 'relative';
       const line = document.createElement('div');
-      line.className = 'task-line';
+      line.className = 'task-line' + ((taskDue[dStr] || []).some(t => t.time === tm && t.important) ? ' imp' : '');
       line.style.top = (tmin/60*CELL_H) + 'px';
       cellEl.appendChild(line);
     });
@@ -1240,7 +1247,8 @@ function renderDay() {
 
   // タスクの期限の線(同じ時刻のタスクは1本にまとめ、名前を並べる)
   const taskByTime = {};
-  dayTasks.forEach(t => { (taskByTime[t.time] = taskByTime[t.time] || []).push(t.title); });
+  dayTasks.forEach(t => { (taskByTime[t.time] = taskByTime[t.time] || []).push((t.important ? '★' : '') + t.title); });
+  const impTimes = new Set(dayTasks.filter(t => t.important).map(t => t.time));
   Object.keys(taskByTime).forEach(tm => {
     const [th, tmin] = tm.split(':').map(Number);
     const slot = document.getElementById('dslot-'+th);
@@ -1248,9 +1256,9 @@ function renderDay() {
     slot.style.position = 'relative';
     slot.style.overflow = 'visible';
     const line = document.createElement('div');
-    line.className = 'day-task-line';
+    line.className = 'day-task-line' + (impTimes.has(tm) ? ' imp' : '');
     line.style.top = (tmin/60*CELL_H) + 'px';
-    line.innerHTML = `<span class="day-task-label${th === 0 && tmin < 20 ? ' below' : ''}">${escHtml(taskByTime[tm].join('、'))} ${tm}</span>`;
+    line.innerHTML = `<span class="day-task-label${th === 0 && tmin < 20 ? ' below' : ''}${impTimes.has(tm) ? ' imp' : ''}">${escHtml(taskByTime[tm].join('、'))} ${tm}</span>`;
     slot.appendChild(line);
   });
 
@@ -1981,7 +1989,7 @@ function delMemo(i) {
    TASKS (タスク管理 / tasks_ver.1.8.4.js を組み込み)
 ══════════════════════════ */
 /* ============================================================
-   tasks_ver.1.8.4.js  ― mydiary タスク管理機能(第4のタブ)
+   tasks_ver.1.8.6.js  ― mydiary タスク管理機能(第4のタブ)
    単体で動作する独立モジュール。mydiary本体にはまだ組み込まれていない。
 
    使い方:
@@ -1991,6 +1999,7 @@ function delMemo(i) {
    依存: Tabler Icons(ti-*)、本体のCSS変数(--bg,--text,--green,--red 等。無ければ代替色)
    保存: localStorage の storageKey(既定 'md_tasks')と optionsKey(既定 'md_task_opts'。区切りの設定)。他のデータには触れない。
    色: タスクごとに color(予定の追加と同じ8色の hex)。未設定・不正な値は初期色のグレーとして扱う。
+   重要: タスクごとに important(true/false)。カレンダーで目立たせる印(未設定は false)。
    区切りの設定: { nearOn: 「○日後まで」を表示するか(既定 true), nearDays: 日数 1〜6(既定 3) }
 ============================================================ */
 const Tasks = (() => {
@@ -2014,6 +2023,9 @@ const Tasks = (() => {
   let palette = PALETTE_DEFAULT;
   const okColor = c => (typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)) ? c : DEFAULT_COLOR;   // 不正な値は初期色に直す(styleに入れるため)
 
+  /* 重要の星(SVG。オフは枠だけ、オンは塗りつぶし) */
+  const STAR_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 17.75l-6.172 3.245l1.179-6.873l-5-4.867l6.9-1l3.086-6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>';
+
   /* ── 状態 ── */
   let root = null;
   let tasks = [];
@@ -2025,7 +2037,7 @@ const Tasks = (() => {
   let selMode = false;
   let sel = new Set();
   let editingId = null;       // null = 新規
-  let form = { hasDue: true, repeat: 'none', color: DEFAULT_COLOR };
+  let form = { hasDue: true, repeat: 'none', color: DEFAULT_COLOR, important: false };
   let hooks = {};             // 本体のスクロール固定などを呼ぶための任意フック {lock, unlock}
   let held = new Set();       // チェック済みだが、画面を切り替えるまでその場に残すタスクのID
 
@@ -2129,7 +2141,7 @@ const Tasks = (() => {
     if (t.repeat !== 'none' && t.due) {
       const n = {
         id: uid(), title: t.title, due: toIso(nextDue(t, now)), repeat: t.repeat,
-        anchorDay: t.anchorDay, color: okColor(t.color), done: false, doneAt: null, nextId: null, createdAt: now.getTime()
+        anchorDay: t.anchorDay, color: okColor(t.color), important: t.important === true, done: false, doneAt: null, nextId: null, createdAt: now.getTime()
       };
       tasks.push(n);
       t.nextId = n.id;
@@ -2171,6 +2183,11 @@ const Tasks = (() => {
     return tasks.filter(t => (!t.done || held.has(t.id)) && !hid.has(t.id));
   }
 
+  function starBtn(t) {
+    const on = t.important === true;
+    return '<button class="tk-star' + (on ? ' on' : '') + '" data-act="star" data-id="' + t.id + '" aria-pressed="' + on +
+      '" aria-label="' + (on ? '重要を外す' : '重要にする') + '">' + STAR_SVG + '</button>';
+  }
   function rowMain(t, key) {
     let sub = '';
     if (t.due) {
@@ -2184,7 +2201,7 @@ const Tasks = (() => {
       '<div class="tk-body"' + (isHeld ? '' : ' data-act="edit" data-id="' + t.id + '"') + '>' +
       '<div class="tk-tt' + (isHeld ? ' s' : '') + '">' + esc(t.title) + repBadge(t) + '</div>' +
       (sub ? '<div class="tk-dl' + (key === 'over' ? ' red' : '') + '">' + sub + '</div>' : '') +
-      '</div></div>';
+      '</div>' + starBtn(t) + '</div>';
   }
   function renderMain() {
     const now = nowFn();
@@ -2291,6 +2308,7 @@ const Tasks = (() => {
     form.hasDue = t ? !!t.due : !(opts && opts.noDue);   // 期限なし画面からの追加は期限OFFで開く
     form.repeat = t ? t.repeat : 'none';
     form.color = t ? okColor(t.color) : DEFAULT_COLOR;
+    form.important = t ? t.important === true : false;
     q('#tk-f-title').value = t ? t.title : '';
     q('#tk-f-date').value = ymd(d);
     q('#tk-f-time').value = p2(d.getHours()) + ':' + p2(d.getMinutes());
@@ -2321,6 +2339,8 @@ const Tasks = (() => {
       if (form.repeat === 'monthly') hint = '毎月' + dd + '日に繰り返します' + (dd > 28 ? '(日数が足りない月は月末)' : '');
     }
     q('#tk-hint').textContent = hint;
+    q('#tk-imp').classList.toggle('on', form.important);
+    q('#tk-imp').setAttribute('aria-checked', String(form.important));
     q('#tk-cr').innerHTML = palette.map(c =>
       '<button type="button" class="tk-cs' + (c.hex === form.color ? ' sel' : '') + '" style="background:' + c.hex +
       '" data-act="color" data-color="' + c.hex + '" title="' + c.name + '" aria-label="' + c.name + '"></button>').join('');
@@ -2340,10 +2360,10 @@ const Tasks = (() => {
     }
     if (editingId) {
       const t = tasks.find(x => x.id === editingId);
-      t.title = title; t.due = due; t.repeat = repeat; t.anchorDay = anchorDay; t.color = form.color;
+      t.title = title; t.due = due; t.repeat = repeat; t.anchorDay = anchorDay; t.color = form.color; t.important = form.important;
     } else {
       tasks.push({
-        id: uid(), title, due, repeat, anchorDay, color: form.color,
+        id: uid(), title, due, repeat, anchorDay, color: form.color, important: form.important,
         done: false, doneAt: null, nextId: null, createdAt: nowFn().getTime()
       });
     }
@@ -2399,6 +2419,12 @@ const Tasks = (() => {
       case 'sw': form.hasDue = !form.hasDue; syncForm(); break;
       case 'rep': form.repeat = el.dataset.rep; syncForm(); break;
       case 'color': form.color = okColor(el.dataset.color); syncForm(); break;
+      case 'imp': form.important = !form.important; syncForm(); break;
+      case 'star': {
+        const tt = tasks.find(x => x.id === id);
+        if (tt) { tt.important = tt.important !== true; save(); refresh(); }
+        break;
+      }
       case 'sheet-cancel': closeSheet(); break;
       case 'sheet-save': saveSheet(); break;
       case 'sheet-delete': deleteFromSheet(); break;
@@ -2480,6 +2506,14 @@ const Tasks = (() => {
 .tk-cr{display:flex;gap:9px;flex-wrap:wrap;padding:2px 0}
 .tk-cs{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:all .2s}
 .tk-cs.sel{border-color:var(--text,#1a1a1a);transform:scale(1.15)}
+.tk-star{flex:none;width:34px;height:34px;margin-right:-8px;display:flex;align-items:center;justify-content:center;background:none;border:none;padding:0;border-radius:50%;cursor:pointer;color:#bbb}
+.tk-star svg path{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.tk-star.on{color:var(--important,#D9730D)}
+.tk-star.on svg path{fill:currentColor}
+.tk-sw.imp.on{background:var(--important,#D9730D);border-color:var(--important,#D9730D)}
+.tk-imp-ic{display:inline-flex;vertical-align:-4px;color:var(--important,#D9730D)}
+.tk-imp-ic svg{width:18px;height:18px}
+.tk-imp-ic svg path{fill:currentColor;stroke:none}
 `;
 
   const HTML = `
@@ -2528,6 +2562,7 @@ const Tasks = (() => {
     </div>
     <span class="tk-lb">カラー</span>
     <div class="tk-cr" id="tk-cr"></div>
+    <div class="tk-tg"><span><span class="tk-imp-ic">${STAR_SVG}</span> 重要(カレンダーで目立たせる)</span><button class="tk-sw imp" id="tk-imp" data-act="imp" role="switch" aria-checked="false" aria-label="重要"></button></div>
     <div class="tk-err" id="tk-err"></div>
     <div class="tk-actions">
       <button class="tk-btn red" data-act="sheet-delete">削除</button>
@@ -2575,7 +2610,7 @@ const Tasks = (() => {
     tasks.forEach(t => {
       if (t.done || !t.due) return;
       const k = t.due.slice(0, 10);
-      (map[k] = map[k] || []).push({ id: t.id, title: t.title, time: t.due.slice(11, 16), overdue: parseIso(t.due) < now });
+      (map[k] = map[k] || []).push({ id: t.id, title: t.title, time: t.due.slice(11, 16), overdue: parseIso(t.due) < now, important: t.important === true });
     });
     Object.keys(map).forEach(k => map[k].sort((a, b) => a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
     return map;
