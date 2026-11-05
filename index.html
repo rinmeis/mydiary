@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MyDiary">
+<meta name="theme-color" content="#EEF9F4">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("md_theme")==="simple"?"simple":"mint"}catch(e){document.documentElement.dataset.theme="mint"}</script>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>MyDiary</title>
@@ -18,8 +20,20 @@
   --text:#1a1a1a;--text2:#666;--text3:#aaa;
   --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.18);
   --accent:#1a1a1a;--green:#1d9e75;--red:#e24b4a;--blue:#378add;--task:#534AB7;--important:#D9730D;--today-frame:#7fd99a;
+  /* テーマで変わる色(ここはシンプル=これまでの見た目) */
+  --page:#fff;--tab-on:#1a1a1a;--tab-line:#1a1a1a;--vb-bg:#1a1a1a;--vb-fg:#fff;--vb-line:#1a1a1a;--focus:#1a1a1a;
+  --card-bg:#f6f6f2;--card-line:none;--pill:#8a8a85;--tbtn-bg:#f6f6f2;
   --r:10px;--rl:16px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* ミントのテーマ(設定で選ぶ。 <html data-theme="mint">) */
+:root[data-theme="mint"]{
+  --bg2:#EEF9F4;--bg3:#DCEFE7;
+  --text:#1d2b26;--text2:#5b6f67;--text3:#9db0a8;
+  --border:rgba(30,110,85,0.14);--border2:rgba(30,110,85,0.25);
+  --accent:#1F8F6E;--today-frame:#3DBE98;
+  --page:#EEF9F4;--tab-on:#17785D;--tab-line:#3DBE98;--vb-bg:#A8E6CF;--vb-fg:#0F4A3A;--vb-line:#A8E6CF;--focus:#3DBE98;
+  --card-bg:#fff;--card-line:0.5px solid var(--border);--pill:#5F9A86;--tbtn-bg:#fff;
 }
 /* ── iOS Safari 全般対応 ── */
 html{
@@ -36,7 +50,7 @@ body{
   -webkit-text-size-adjust:100%;    /* テキスト自動拡大防止 */
 }
 .app{
-  width:100%;max-width:430px;background:var(--bg);
+  width:100%;max-width:430px;background:var(--page);
   min-height:100vh;min-height:-webkit-fill-available;
   display:flex;flex-direction:column;
   padding-bottom: var(--safe-bottom); /* ホームバー対応 */
@@ -57,15 +71,15 @@ input,select,textarea{
 }
 
 /* ── Header ── */
-.header{padding:12px 16px 8px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:20}
+.header{padding:12px 16px 8px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--page);z-index:20}
 .header h1{font-size:17px;font-weight:500}
 .header-date{font-size:12px;color:var(--text2)}
 
 /* ── Tab bar ── */
-.tabs{display:flex;border-bottom:0.5px solid var(--border);background:var(--bg);position:sticky;top:49px;z-index:20}
+.tabs{display:flex;border-bottom:0.5px solid var(--border);background:var(--page);position:sticky;top:49px;z-index:20}
 .tab{flex:1;padding:9px 4px 7px;text-align:center;font-size:11px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
 .tab i{display:block;font-size:18px;margin-bottom:2px}
-.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.tab.active{color:var(--tab-on);border-bottom-color:var(--tab-line);font-weight:500}
 
 /* ── Screens ── */
 .screen{display:none;flex:1;flex-direction:column}
@@ -75,7 +89,7 @@ input,select,textarea{
 .cal-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden}
 .view-switcher{display:flex;gap:8px;margin:10px 16px 0}
 .view-btn{width:34px;height:34px;border-radius:50%;font-size:13px;font-weight:500;background:none;border:1.5px solid var(--border2);cursor:pointer;color:var(--text2);font-family:inherit;transition:all .18s;display:flex;align-items:center;justify-content:center;padding:0}
-.view-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+.view-btn.active{background:var(--vb-bg);color:var(--vb-fg);border-color:var(--vb-line)}
 .view-btn:active{opacity:.7}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 6px}
 .cal-nav-btn{background:none;border:none;cursor:pointer;color:var(--text);padding:5px 8px;font-size:18px;border-radius:8px}
@@ -97,7 +111,7 @@ input,select,textarea{
 .cal-dow:first-child{color:var(--red)}
 .cal-dow:last-child{color:var(--blue)}
 .cal-body-month{display:grid;grid-template-columns:repeat(7,1fr);border-left:0.5px solid var(--border);border-top:0.5px solid var(--border)}
-.cal-cell{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative;height:var(--cal-cell-h,90px);border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+.cal-cell{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative;height:var(--cal-cell-h,90px);background:var(--bg);border-radius:0;padding:3px 2px 2px;cursor:pointer;transition:background .15s;overflow:hidden;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
 /* today panel */
 .today-evt-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
 .today-evt-item:last-child{border-bottom:none}
@@ -149,11 +163,11 @@ input,select,textarea{
 .week-day-col{text-align:center;font-size:11px;color:var(--text2)}
 .week-day-col .wdow{font-size:10px;margin-bottom:2px}
 .week-day-col .wdnum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:12px}
-.week-day-col.today .wdnum{background:var(--text);color:#fff}
+.week-day-col.today .wdnum{background:var(--accent);color:#fff}
 .week-day-col.sun .wdow,.week-day-col.sun .wdnum{color:var(--red)}
 .week-day-col.sat .wdow,.week-day-col.sat .wdnum{color:var(--blue)}
-.week-day-col.today.sun .wdnum,.week-day-col.today.sat .wdnum{background:var(--text);color:#fff}
-.time-grid{flex:1;overflow-y:auto;position:relative;margin:0 4px}
+.week-day-col.today.sun .wdnum,.week-day-col.today.sat .wdnum{background:var(--accent);color:#fff}
+.time-grid{flex:1;overflow-y:auto;position:relative;margin:0 4px;background:var(--bg)}
 .week-time-row{display:grid;grid-template-columns:40px repeat(7,1fr);min-height:44px;border-bottom:0.5px solid var(--border)}
 .time-label{font-size:10px;color:var(--text3);padding:3px 6px 0 0;text-align:right;line-height:1}
 .time-cell{border-left:0.5px solid var(--border);position:relative;cursor:pointer}
@@ -169,7 +183,7 @@ input,select,textarea{
 #view-day.show{display:flex}
 .day-head{padding:6px 16px 8px;border-bottom:0.5px solid var(--border)}
 .day-head-label{font-size:14px;font-weight:500}
-.day-time-grid{flex:1;overflow-y:auto}
+.day-time-grid{flex:1;overflow-y:auto;background:var(--bg)}
 .day-row{display:grid;grid-template-columns:44px 1fr;min-height:52px;border-bottom:0.5px solid var(--border)}
 .day-time-lbl{font-size:11px;color:var(--text3);padding:4px 8px 0 16px;line-height:1}
 .day-slot{border-left:0.5px solid var(--border);position:relative;cursor:pointer;min-height:52px}
@@ -190,9 +204,9 @@ input,select,textarea{
 .form-row{margin-bottom:12px}
 .form-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block}
 .form-input{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block}
-.form-input:focus{border-color:var(--text)}
+.form-input:focus{border-color:var(--focus)}
 .form-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;box-sizing:border-box}
-.form-select:focus{border-color:var(--text)}
+.form-select:focus{border-color:var(--focus)}
 .time-pair{display:flex;flex-direction:column;gap:4px}
 .time-pair-labels{display:flex;align-items:center}
 .time-pair-label{flex:1;font-size:11px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:3px}
@@ -214,7 +228,7 @@ input,select,textarea{
 .modal-actions{display:flex;gap:8px;margin-top:16px}
 .modal-actions button{flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit}
 .btn-cancel{background:none;border:0.5px solid var(--border2);color:var(--text2)}
-.btn-save{background:var(--text);border:none;color:#fff;font-weight:500}
+.btn-save{background:var(--accent);border:none;color:#fff;font-weight:500}
 .btn-delete{background:none;border:0.5px solid var(--red);color:var(--red)}
 
 /* recur badge on detail */
@@ -239,12 +253,12 @@ input,select,textarea{
 .diary-top-title{font-size:16px;font-weight:500}
 .diary-top-date{font-size:13px;color:var(--text2)}
 .diary-textarea{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:12px 13px;font-size:14px;line-height:1.7;resize:none;font-family:inherit;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
-.diary-textarea:focus{border-color:var(--text)}
-.save-btn{width:100%;margin-top:10px;padding:12px;border:none;border-radius:var(--r);background:var(--text);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.diary-textarea:focus{border-color:var(--focus)}
+.save-btn{width:100%;margin-top:10px;padding:12px;border:none;border-radius:var(--r);background:var(--accent);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
 .save-btn:active{opacity:.75}
 .section{margin-top:18px;padding-top:14px;border-top:0.5px solid var(--border)}
 .section-title{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase}
-.entry-card{background:var(--bg2);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;cursor:pointer}
+.entry-card{background:var(--card-bg);border:var(--card-line);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;cursor:pointer}
 .entry-card:active{background:var(--bg3)}
 .entry-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .entry-date{font-size:11px;color:var(--text2)}
@@ -266,16 +280,16 @@ input,select,textarea{
 .memo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .memo-header h2{font-size:16px;font-weight:500}
 .new-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
-.memo-form{background:var(--bg2);border-radius:var(--rl);padding:14px;margin-bottom:14px;display:none}
+.memo-form{background:var(--card-bg);border:var(--card-line);border-radius:var(--rl);padding:14px;margin-bottom:14px;display:none}
 .memo-form.open{display:block}
 .memo-form h3{font-size:14px;font-weight:500;margin-bottom:10px}
 .memo-input{width:100%;border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:16px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;margin-bottom:8px;-webkit-appearance:none;appearance:none}
-.memo-input:focus{border-color:var(--text)}
+.memo-input:focus{border-color:var(--focus)}
 .form-actions-row{display:flex;gap:8px;margin-top:4px}
 .form-actions-row button{flex:1;padding:10px;border-radius:var(--r);font-size:13px;cursor:pointer;font-family:inherit}
 .btn-c{background:none;border:0.5px solid var(--border2);color:var(--text2)}
-.btn-o{background:var(--text);border:none;color:#fff;font-weight:500}
-.memo-card{background:var(--bg2);border-radius:var(--r);padding:12px 13px;margin-bottom:8px}
+.btn-o{background:var(--accent);border:none;color:#fff;font-weight:500}
+.memo-card{background:var(--card-bg);border:var(--card-line);border-radius:var(--r);padding:12px 13px;margin-bottom:8px}
 .memo-card-done{opacity:.65}
 .memo-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
 .memo-card-title{font-size:14px;font-weight:500;flex:1;line-height:1.4}
@@ -285,7 +299,7 @@ input,select,textarea{
 /* checklist */
 .check-add-row{display:flex;gap:6px}
 .check-add-input{flex:1;border:0.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;resize:none;overflow:hidden;line-height:1.4;min-height:34px;display:block}
-.check-add-input:focus{border-color:var(--text)}
+.check-add-input:focus{border-color:var(--focus)}
 .check-add-btn{padding:7px 12px;border:0.5px solid var(--border2);border-radius:8px;background:none;color:var(--text);font-size:18px;cursor:pointer;line-height:1;display:flex;align-items:center}
 .check-add-btn:active{background:var(--bg2)}
 .check-group{margin-top:8px}
@@ -296,7 +310,7 @@ input,select,textarea{
 .memo-checklist{display:flex;flex-direction:column;gap:2px}
 .memo-check-item{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;user-select:none}
 .memo-check-item .ci-box{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.memo-check-item.done .ci-box{background:var(--text);border-color:var(--text)}
+.memo-check-item.done .ci-box{background:var(--accent);border-color:var(--accent)}
 .memo-check-item.done .ci-box::after{content:'';width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block}
 .memo-check-item .ci-label{font-size:13px;color:var(--text2);line-height:1.4;transition:all .15s;word-break:break-all;flex:1}
 .memo-check-item.done .ci-label{text-decoration:line-through;color:var(--text3)}
@@ -329,7 +343,7 @@ input,select,textarea{
 /* ══ TOGGLE SWITCH ══ */
 .toggle-row{display:flex;align-items:center;justify-content:space-between}
 .toggle-switch{width:46px;height:26px;border-radius:13px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
-.toggle-switch.on{background:var(--text)}
+.toggle-switch.on{background:var(--accent)}
 .toggle-thumb{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none}
 .toggle-switch.on .toggle-thumb{transform:translateX(20px)}
 
@@ -344,6 +358,29 @@ input,select,textarea{
 .settings-btn{width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:14px;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:10px;margin-bottom:8px;-webkit-tap-highlight-color:transparent}
 .settings-btn:active{background:var(--bg2)}
 .settings-btn i{font-size:18px;color:var(--text2);flex-shrink:0}
+/* タスクの区切り(○日後まで)の一覧 */
+.near-row{display:flex;gap:8px;margin-top:8px}
+.near-row .form-select{flex:1;min-width:0;width:auto}
+.near-del{width:42px;flex:none;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;padding:0}
+.near-del:disabled{opacity:.4;cursor:default}
+.near-add-btn{width:100%;margin-top:8px;padding:10px;border:0.5px dashed var(--border2);border-radius:var(--r);background:none;color:var(--tab-on);font-family:inherit;font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.near-add-btn i{font-size:15px}
+/* テーマ選択(見本の色はテーマに関係なく固定) */
+.theme-row{display:flex;gap:8px}
+.theme-card{flex:1;min-width:0;display:block;text-align:left;font-family:inherit;cursor:pointer;background:#fff;color:#1a1a1a;border:0.5px solid rgba(0,0,0,.18);border-radius:12px;padding:8px}
+.theme-card.sel{border:2px solid #3DBE98;padding:6.5px}
+.tp{display:block;border:0.5px solid;border-radius:8px;overflow:hidden}
+.tp-tab{display:block;width:40%;height:12px;border-bottom:2px solid}
+.tp-btns{display:flex;gap:3px;padding:6px 6px 0}
+.tp-btns i{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:block}
+.tp-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:5px 6px 6px}
+.tp-grid b{height:15px;background:#fff;border:0.5px solid var(--tl)}
+.tp-grid b.t{outline:1.5px solid var(--tt);outline-offset:-1.5px}
+.theme-name{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:500}
+.theme-sub{display:block;font-size:11px;color:#666;margin-top:2px;padding-left:22px}
+.theme-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid #bbb;background:#fff;flex:none;display:inline-flex;align-items:center;justify-content:center}
+.theme-card.sel .theme-dot{background:#3DBE98;border-color:#3DBE98}
+.theme-card.sel .theme-dot::after{content:'';width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block}
 </style>
 </head>
 <body>
@@ -473,7 +510,7 @@ input,select,textarea{
       <input class="form-input" type="date" id="date-jump-input" style="margin-bottom:12px">
       <div style="display:flex;gap:8px">
         <button class="btn-cancel" style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:none;border:0.5px solid var(--border2);color:var(--text2)" onclick="closeDateJumper()">キャンセル</button>
-        <button class="btn-save"   style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:var(--text);border:none;color:#fff;font-weight:500" onclick="confirmDateJump()">移動</button>
+        <button class="btn-save"   style="flex:1;padding:11px;border-radius:var(--r);font-size:14px;cursor:pointer;font-family:inherit;background:var(--accent);border:none;color:#fff;font-weight:500" onclick="confirmDateJump()">移動</button>
       </div>
     </div>
   </div>
@@ -608,21 +645,20 @@ input,select,textarea{
     <div class="modal-sheet-inner">
       <div class="modal-title">設定</div>
       <div class="settings-section">
+        <div class="settings-section-title">テーマ</div>
+        <div class="theme-row"><button type="button" class="theme-card" id="theme-mint" onclick="setTheme('mint')" aria-pressed="false"><span class="tp" style="background:#EEF9F4;border-color:rgba(30,110,85,.25);--tl:rgba(30,110,85,.25);--tt:#3DBE98"><span class="tp-tab" style="border-bottom-color:#3DBE98"></span><span class="tp-btns"><i style="background:#A8E6CF"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>ミント</span><span class="theme-sub">やわらかい新しい見た目</span></button><button type="button" class="theme-card" id="theme-simple" onclick="setTheme('simple')" aria-pressed="false"><span class="tp" style="background:#fff;border-color:rgba(0,0,0,.18);--tl:rgba(0,0,0,.18);--tt:#7fd99a"><span class="tp-tab" style="border-bottom-color:#1a1a1a"></span><span class="tp-btns"><i style="background:#1a1a1a"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>シンプル</span><span class="theme-sub">これまでの白と黒</span></button></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">選ぶとすぐに切り替わります</div>
+      </div>
+      <div class="settings-section">
         <div class="settings-section-title">タスクの区切り</div>
         <div class="toggle-row">
           <label class="form-label" style="margin-bottom:0">「○日後まで」の区切りを表示</label>
           <div class="toggle-switch" id="near-toggle" onclick="toggleNearOn()" role="switch" aria-checked="true" aria-label="「○日後まで」の区切りを表示"><div class="toggle-thumb"></div></div>
         </div>
-        <div class="form-row" id="near-days-row" style="margin:12px 0 0">
-          <label class="form-label" for="near-days-sel">日数</label>
-          <select class="form-select" id="near-days-sel" onchange="changeNearDays(this.value)">
-            <option value="1">明日まで</option>
-            <option value="2">2日後まで</option>
-            <option value="3">3日後まで</option>
-            <option value="4">4日後まで</option>
-            <option value="5">5日後まで</option>
-            <option value="6">6日後まで</option>
-          </select>
+        <div id="near-days-row" style="margin:12px 0 0">
+          <span class="form-label">区切りの日数</span>
+          <div id="near-list"></div>
+          <button type="button" class="near-add-btn" id="near-add" onclick="addNearDay()"><i class="ti ti-plus" aria-hidden="true"></i>区切りを追加</button>
         </div>
         <div id="near-hint" style="font-size:11px;color:var(--text2);margin-top:8px"></div>
       </div>
@@ -687,7 +723,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.7';
+const VERSION = 'ver.1.8.8';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1653,15 +1689,55 @@ function syncTaskSettings() {
   const tg = document.getElementById('near-toggle');
   tg.classList.toggle('on', o.nearOn);
   tg.setAttribute('aria-checked', String(o.nearOn));
-  document.getElementById('near-days-sel').value = String(o.nearDays);
+  const days = o.nearDays;
   document.getElementById('near-days-row').style.display = o.nearOn ? '' : 'none';
+  // 区切りの行(他の行で使っている日数は選べない。最後の1つは消せない)
+  document.getElementById('near-list').innerHTML = days.map((n, i) =>
+    '<div class="near-row"><select class="form-select" aria-label="区切りの日数" onchange="changeNearDay(' + i + ', this.value)">' +
+    [1, 2, 3, 4, 5, 6].map(v => '<option value="' + v + '"' + (v === n ? ' selected' : '') + (v !== n && days.includes(v) ? ' disabled' : '') + '>' + nearLabel(v) + '</option>').join('') +
+    '</select><button type="button" class="near-del" onclick="removeNearDay(' + i + ')" aria-label="この区切りを削除"' + (days.length <= 1 ? ' disabled' : '') + '><i class="ti ti-x" aria-hidden="true"></i></button></div>').join('');
+  document.getElementById('near-add').style.display = days.length >= 6 ? 'none' : '';
   const hint = document.getElementById('near-hint');
   if (!o.nearOn) { hint.textContent = '一覧では「今日まで」の次は「来週まで」になります'; return; }
-  const d = new Date(); d.setDate(d.getDate() + o.nearDays);
-  hint.textContent = '一覧では「' + (o.nearDays === 1 ? '明日まで' : o.nearDays + '日後まで') + ' (' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ')」のように表示されます';
+  hint.textContent = '一覧では' + days.map(n => {
+    const d = new Date(); d.setDate(d.getDate() + n);
+    return '「' + nearLabel(n) + ' (' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ')」';
+  }).join('') + 'のように表示されます';
 }
+function nearLabel(n) { return n === 1 ? '明日まで' : n + '日後まで'; }
 function toggleNearOn() { Tasks.setOptions({ nearOn: !Tasks.getOptions().nearOn }); syncTaskSettings(); }
-function changeNearDays(v) { Tasks.setOptions({ nearDays: Number(v) }); syncTaskSettings(); }
+function changeNearDay(i, v) { const days = Tasks.getOptions().nearDays; days[i] = Number(v); Tasks.setOptions({ nearDays: days }); syncTaskSettings(); }
+function removeNearDay(i) { const days = Tasks.getOptions().nearDays; if (days.length <= 1) return; days.splice(i, 1); Tasks.setOptions({ nearDays: days }); syncTaskSettings(); }
+function addNearDay() {
+  const days = Tasks.getOptions().nearDays;
+  const free = [1, 2, 3, 4, 5, 6].filter(v => !days.includes(v));
+  if (!free.length) return;
+  const next = free.find(v => v > Math.max(...days));                // いちばん大きい日数のあと。なければ使っていない最小の日数
+  days.push(next !== undefined ? next : free[0]);
+  Tasks.setOptions({ nearDays: days }); syncTaskSettings();
+}
+
+/* テーマ(この端末に保存。未設定はミント) */
+const THEME_KEY = 'md_theme';
+function getTheme() {
+  try { return localStorage.getItem(THEME_KEY) === 'simple' ? 'simple' : 'mint'; } catch(e) { return 'mint'; }
+}
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = t === 'simple' ? '#ffffff' : '#EEF9F4';
+  ['mint', 'simple'].forEach(k => {
+    const b = document.getElementById('theme-' + k);
+    if (!b) return;
+    b.classList.toggle('sel', k === t);
+    b.setAttribute('aria-pressed', String(k === t));
+  });
+}
+function setTheme(t) {
+  try { localStorage.setItem(THEME_KEY, t); } catch(e) {}
+  applyTheme(t);
+}
+applyTheme(getTheme());
 
 function openSettings() {
   syncTaskSettings();
@@ -1991,7 +2067,7 @@ function delMemo(i) {
    TASKS (タスク管理 / tasks_ver.1.8.4.js を組み込み)
 ══════════════════════════ */
 /* ============================================================
-   tasks_ver.1.8.6.js  ― mydiary タスク管理機能(第4のタブ)
+   tasks_ver.1.8.8.js  ― mydiary タスク管理機能(第4のタブ)
    単体で動作する独立モジュール。mydiary本体にはまだ組み込まれていない。
 
    使い方:
@@ -2002,7 +2078,8 @@ function delMemo(i) {
    保存: localStorage の storageKey(既定 'md_tasks')と optionsKey(既定 'md_task_opts'。区切りの設定)。他のデータには触れない。
    色: タスクごとに color(予定の追加と同じ8色の hex)。未設定・不正な値は初期色のグレーとして扱う。
    重要: タスクごとに important(true/false)。カレンダーで目立たせる印(未設定は false)。
-   区切りの設定: { nearOn: 「○日後まで」を表示するか(既定 true), nearDays: 日数 1〜6(既定 3) }
+   区切りの設定: { nearOn: 「○日後まで」を表示するか(既定 true), nearDays: 日数の配列。各 1〜6・重複なし・小さい順(既定 [3])。
+                 古い形式の数(例: 3)も読める }
 ============================================================ */
 const Tasks = (() => {
   'use strict';
@@ -2011,7 +2088,9 @@ const Tasks = (() => {
   const REP = { none: 'なし', daily: '毎日', weekly: '毎週', monthly: '毎月' };
   const DOW = ['日', '月', '火', '水', '木', '金', '土'];
   const GROUPS = [
-    ['over', '期限超過'], ['today', '今日まで'], ['near', '○日後まで'], ['week', '来週まで'],
+    ['over', '期限超過'], ['today', '今日まで'],
+    ['near1', '明日まで'], ['near2', '2日後まで'], ['near3', '3日後まで'], ['near4', '4日後まで'], ['near5', '5日後まで'], ['near6', '6日後まで'],
+    ['week', '来週まで'],
     ['month', '今月まで'], ['later', 'それ以降'], ['none', '期限なし']
   ];
 
@@ -2033,7 +2112,7 @@ const Tasks = (() => {
   let tasks = [];
   let storageKey = 'md_tasks';
   let optsKey = 'md_task_opts';
-  let cfg = { nearOn: true, nearDays: 3 };   // 区切りの設定(「○日後まで」の表示と日数)
+  let cfg = { nearOn: true, nearDays: [3] };   // 区切りの設定(「○日後まで」の表示と日数の一覧)
   let nowFn = () => new Date();
   let view = 'main';          // 'main' | 'done' | 'nodue'
   let selMode = false;
@@ -2074,8 +2153,10 @@ const Tasks = (() => {
 
   /* ── 区切りの設定 ── */
   function sanitizeOpts(o) {
-    const n = Math.round(Number(o && o.nearDays));
-    return { nearOn: !(o && o.nearOn === false), nearDays: n >= 1 && n <= 6 ? n : 3 };
+    let a = o && o.nearDays;
+    if (!Array.isArray(a)) a = [a];                                  // 古い形式(数ひとつ)も読む
+    const days = Array.from(new Set(a.map(v => Math.round(Number(v))).filter(n => n >= 1 && n <= 6))).sort((x, y) => x - y);
+    return { nearOn: !(o && o.nearOn === false), nearDays: days.length ? days : [3] };
   }
   function loadOpts() {
     try { cfg = sanitizeOpts(JSON.parse(localStorage.getItem(optsKey) || 'null')); }
@@ -2110,8 +2191,8 @@ const Tasks = (() => {
     const wk = addDays(today, 7);
     const mEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     const showMonth = wk.getMonth() === today.getMonth();   // 来週が来月なら「今月まで」を省略
-    const near = addDays(today, cfg.nearDays);
-    return { today, near, nearOn: cfg.nearOn, wk, mEnd, showMonth };
+    const nears = cfg.nearDays.map(n => ({ n, date: addDays(today, n) }));
+    return { today, nears, nearOn: cfg.nearOn, wk, mEnd, showMonth };
   }
   function groupOf(t, now, gi) {
     if (!t.due) return 'none';
@@ -2119,7 +2200,9 @@ const Tasks = (() => {
     if (d < now) return 'over';
     const dDay = startOfDay(d);
     if (+dDay === +gi.today) return 'today';
-    if (gi.nearOn && dDay <= gi.near) return 'near';        // 明日〜○日後
+    if (gi.nearOn) {                                          // 明日〜○日後(日数の小さい区切りから順に当てはめる)
+      for (const x of gi.nears) if (dDay <= x.date) return 'near' + x.n;
+    }
     if (dDay <= gi.wk) return 'week';
     if (gi.showMonth && dDay <= gi.mEnd) return 'month';
     return 'later';
@@ -2127,7 +2210,7 @@ const Tasks = (() => {
   function groupLabel(key, gi) {
     const base = GROUPS.find(g => g[0] === key)[1];
     if (key === 'today') return base + ' (' + slash(gi.today) + ')';
-    if (key === 'near') return (cfg.nearDays === 1 ? '明日まで' : cfg.nearDays + '日後まで') + ' (' + slash(gi.near) + ')';
+    if (/^near\d$/.test(key)) return base + ' (' + slash(addDays(gi.today, Number(key.slice(4)))) + ')';
     if (key === 'week') return base + ' (' + slash(gi.wk) + ')';
     if (key === 'month') return base + ' (' + slash(gi.mEnd) + ')';
     return base;
@@ -2444,18 +2527,18 @@ const Tasks = (() => {
 .tk-root.tk-view-nodue .tk-nodue{display:flex}
 .tk-root.tk-view-done .tk-fab{display:none}
 .tk-toolbar{display:flex;justify-content:flex-end;gap:6px;padding:10px 16px 0}
-.tk-tbtn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-family:inherit;color:var(--text,#1a1a1a);border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:16px;padding:5px 10px;background:var(--bg2,#f6f6f2);cursor:pointer}
+.tk-tbtn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-family:inherit;color:var(--text,#1a1a1a);border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:16px;padding:5px 10px;background:var(--tbtn-bg,#f6f6f2);cursor:pointer}
 .tk-tbtn i{font-size:14px}
-.tk-tbtn.hl{border-color:var(--text,#1a1a1a)}
+.tk-tbtn.hl{border-color:var(--accent,#1a1a1a)}
 .tk-foot{text-align:center;padding:18px 24px calc(96px + env(safe-area-inset-bottom,0px));color:var(--text2,#666)}
 .tk-pillw{display:flex;justify-content:center;padding:14px 0 4px}
-.tk-pill{font-size:11px;color:#fff;background:#8a8a85;border-radius:12px;padding:3px 12px}
+.tk-pill{font-size:11px;color:#fff;background:var(--pill,#8a8a85);border-radius:12px;padding:3px 12px}
 .tk-pill.red{background:var(--red,#e24b4a)}
-.tk-row{position:relative;display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09))}
+.tk-row{position:relative;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg,#fff);border-bottom:.5px solid var(--border,rgba(0,0,0,.09))}
 .tk-chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--text3,#aaa);background:none;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;padding:0;cursor:pointer;transition:background .15s,border-color .15s}
 .tk-chk.on{background:var(--green,#1d9e75);border-color:var(--green,#1d9e75)}
 .tk-chk.sq{border-radius:7px}
-.tk-chk.sq.on.dark{background:var(--text,#1a1a1a);border-color:var(--text,#1a1a1a)}
+.tk-chk.sq.on.dark{background:var(--accent,#1a1a1a);border-color:var(--accent,#1a1a1a)}
 .tk-body{flex:1;min-width:0;cursor:pointer}
 .tk-tt{font-size:14px;word-break:break-word}
 .tk-tt.s{text-decoration:line-through;color:var(--text3,#aaa)}
@@ -2469,7 +2552,7 @@ const Tasks = (() => {
 .tk-empty-s{font-size:12px;margin-top:4px}
 .tk-fab{position:fixed;right:max(16px,calc(50vw - 199px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:none;background:var(--accent,#1a1a1a);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:30;box-shadow:0 2px 8px rgba(0,0,0,.25);padding:0}
 .tk-fab:active{transform:scale(.94)}
-.tk-done-head,.tk-nodue-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09));position:sticky;top:0;background:var(--bg,#fff);z-index:5}
+.tk-done-head,.tk-nodue-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:.5px solid var(--border,rgba(0,0,0,.09));position:sticky;top:0;background:var(--page,#fff);z-index:5}
 .tk-done-head button,.tk-nodue-head button{background:none;border:none;font-family:inherit;font-size:13px;color:var(--blue,#378add);cursor:pointer;min-width:64px;padding:4px 0}
 .tk-done-head button:first-child,.tk-nodue-head button:first-child{text-align:left}
 .tk-done-head button:last-child,.tk-nodue-head button:last-child{text-align:right}
@@ -2482,7 +2565,7 @@ const Tasks = (() => {
 .tk-btn.red{color:var(--red,#e24b4a);border-color:var(--red,#e24b4a)}
 .tk-btn.fill{background:var(--red,#e24b4a);border-color:var(--red,#e24b4a);color:#fff}
 .tk-btn.dim{opacity:.4}
-.tk-btn.dark{background:var(--text,#1a1a1a);border-color:var(--text,#1a1a1a);color:#fff;font-weight:500}
+.tk-btn.dark{background:var(--accent,#1a1a1a);border-color:var(--accent,#1a1a1a);color:#fff;font-weight:500}
 .tk-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;touch-action:none}
 .tk-modal.open{opacity:1;pointer-events:all}
 .tk-sheet{background:var(--bg,#fff);border-radius:20px 20px 0 0;width:100%;max-width:430px;box-sizing:border-box;transform:translateY(20px);transition:transform .2s;max-height:92vh;overflow:hidden}
@@ -2491,7 +2574,7 @@ const Tasks = (() => {
 .tk-sheet-t{font-size:16px;font-weight:500;margin-bottom:12px;text-align:center}
 .tk-lb{font-size:12px;color:var(--text2,#666);margin:12px 0 5px;display:block}
 .tk-in{width:100%;min-height:42px;border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:var(--r,10px);padding:9px 12px;font-size:16px;font-family:inherit;background:var(--bg,#fff);color:var(--text,#1a1a1a);outline:none;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block}
-.tk-in:focus{border-color:var(--text,#1a1a1a)}
+.tk-in:focus{border-color:var(--focus,#1a1a1a)}
 .tk-in::-webkit-date-and-time-value{text-align:left}
 .tk-tg{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-top:16px}
 .tk-sw{width:44px;height:26px;border-radius:13px;background:var(--bg3,#eeecea);border:.5px solid var(--border2,rgba(0,0,0,.18));position:relative;cursor:pointer;padding:0;transition:background .15s}
@@ -2500,7 +2583,7 @@ const Tasks = (() => {
 .tk-sw.on:after{left:20px}
 .tk-seg{display:flex;border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:var(--r,10px);overflow:hidden}
 .tk-seg button{flex:1;padding:9px 0;font-size:13px;font-family:inherit;background:var(--bg2,#f6f6f2);color:var(--text2,#666);border:none;cursor:pointer}
-.tk-seg button.on{background:var(--text,#1a1a1a);color:#fff}
+.tk-seg button.on{background:var(--accent,#1a1a1a);color:#fff}
 .tk-hint{font-size:11px;color:#185FA5;margin-top:5px;min-height:14px}
 .tk-err{font-size:12px;color:var(--red,#e24b4a);margin-top:8px;min-height:16px}
 .tk-actions{display:flex;gap:8px;margin-top:8px}
@@ -2626,7 +2709,7 @@ const Tasks = (() => {
     setNow(fn) { nowFn = fn || (() => new Date()); render(); },
     getTasks() { return tasks; },
     pendingByDate,
-    getOptions() { return { nearOn: cfg.nearOn, nearDays: cfg.nearDays }; },
+    getOptions() { return { nearOn: cfg.nearOn, nearDays: cfg.nearDays.slice() }; },
     setOptions(o) { cfg = sanitizeOpts(Object.assign({}, cfg, o)); saveOpts(); refresh(); },
     setTasks(a) { tasks = a; save(); render(); },
     reload() { load(); render(); }
