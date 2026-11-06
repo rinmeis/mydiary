@@ -288,8 +288,8 @@ input,select,textarea{
 .empty-msg{text-align:center;color:var(--text3);font-size:13px;padding:28px 0}
 
 /* ══ MEMO ══ */
-.memo-screen{padding:16px;flex:1;overflow-y:auto}
-.memo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.memo-screen{padding:0 16px 16px;flex:1;overflow-y:auto}
+.memo-header{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 14px;flex:none}   /* スクロールしない(上に固定) */
 .memo-header h2{font-size:16px;font-weight:500}
 .new-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:none;color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
 .memo-form{background:var(--card-bg);border:var(--card-line);border-radius:var(--rl);padding:14px;margin-bottom:14px;display:none}
@@ -491,11 +491,11 @@ input,select,textarea{
 
   <!-- ══ MEMO SCREEN ══ -->
   <div id="screen-memo" class="screen">
+    <div class="memo-header">
+      <h2>メモ帳</h2>
+      <button class="new-btn" onclick="toggleMemoForm()"><i class="ti ti-plus" aria-hidden="true"></i>新規</button>
+    </div>
     <div class="memo-screen">
-      <div class="memo-header">
-        <h2>メモ帳</h2>
-        <button class="new-btn" onclick="toggleMemoForm()"><i class="ti ti-plus" aria-hidden="true"></i>新規</button>
-      </div>
       <div class="memo-form" id="memo-form">
         <h3>新しいメモ</h3>
         <input class="memo-input" type="text" id="memo-title-in" placeholder="タイトル">
@@ -721,7 +721,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.11';
+const VERSION = 'ver.1.8.12';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
