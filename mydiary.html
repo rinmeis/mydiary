@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MyDiary">
 <meta name="theme-color" content="#EEF9F4">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem("md_theme")==="simple"?"simple":"mint"}catch(e){document.documentElement.dataset.theme="mint"}</script>
+<script>try{var v=localStorage.getItem("md_theme");document.documentElement.dataset.theme=(v==="simple"||v==="sky")?v:"mint"}catch(e){document.documentElement.dataset.theme="mint"}</script>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>MyDiary</title>
@@ -34,6 +34,15 @@
   --accent:#1F8F6E;--today-frame:#3DBE98;
   --page:#EEF9F4;--tab-on:#17785D;--tab-line:#3DBE98;--vb-bg:#A8E6CF;--vb-fg:#0F4A3A;--vb-line:#A8E6CF;--focus:#3DBE98;
   --card-bg:#fff;--card-line:0.5px solid var(--border);--pill:#5F9A86;--tbtn-bg:#fff;
+}
+/* 水色のテーマ(<html data-theme="sky">) */
+:root[data-theme="sky"]{
+  --bg2:#EAF5FC;--bg3:#D6EAF6;
+  --text:#1c2a35;--text2:#56697a;--text3:#9bb0c0;
+  --border:rgba(40,110,160,0.16);--border2:rgba(40,110,160,0.28);
+  --accent:#2B7DB5;--today-frame:#4BA3D8;
+  --page:#EAF5FC;--tab-on:#1D6FA8;--tab-line:#4BA3D8;--vb-bg:#BFE0F5;--vb-fg:#0F3F63;--vb-line:#BFE0F5;--focus:#4BA3D8;
+  --card-bg:#fff;--card-line:0.5px solid var(--border);--pill:#4F88AE;--tbtn-bg:#fff;
 }
 /* ── iOS Safari 全般対応 ── */
 html{
@@ -267,12 +276,13 @@ input,select,textarea{
 .entry-act-btn:active{background:var(--bg3)}
 .entry-del-btn{color:var(--red)}
 .entry-preview{font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:calc(1.55em * 3);overflow:hidden}
-.entry-more{font-size:11px;color:var(--blue);text-align:right;margin-top:2px}
+.entry-card.expanded .entry-preview{max-height:none;overflow:visible}
+.entry-more{font-size:11px;color:var(--blue);margin-top:2px;display:flex;justify-content:flex-end;align-items:center;gap:2px}
+.entry-more i{font-size:12px}
 .diary-month{margin-bottom:4px}
 .diary-month-head{display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;padding:9px 2px;font-family:inherit;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
 .diary-month-head i{font-size:15px;color:var(--text2)}
 .diary-month-head .dm-count{margin-left:auto;font-size:11px;font-weight:400;color:var(--text2)}
-.diary-full{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;margin-bottom:4px}
 .empty-msg{text-align:center;color:var(--text3);font-size:13px;padding:28px 0}
 
 /* ══ MEMO ══ */
@@ -646,7 +656,7 @@ input,select,textarea{
       <div class="modal-title">設定</div>
       <div class="settings-section">
         <div class="settings-section-title">テーマ</div>
-        <div class="theme-row"><button type="button" class="theme-card" id="theme-mint" onclick="setTheme('mint')" aria-pressed="false"><span class="tp" style="background:#EEF9F4;border-color:rgba(30,110,85,.25);--tl:rgba(30,110,85,.25);--tt:#3DBE98"><span class="tp-tab" style="border-bottom-color:#3DBE98"></span><span class="tp-btns"><i style="background:#A8E6CF"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>ミント</span><span class="theme-sub">やわらかい新しい見た目</span></button><button type="button" class="theme-card" id="theme-simple" onclick="setTheme('simple')" aria-pressed="false"><span class="tp" style="background:#fff;border-color:rgba(0,0,0,.18);--tl:rgba(0,0,0,.18);--tt:#7fd99a"><span class="tp-tab" style="border-bottom-color:#1a1a1a"></span><span class="tp-btns"><i style="background:#1a1a1a"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>シンプル</span><span class="theme-sub">これまでの白と黒</span></button></div>
+        <div class="theme-row"><button type="button" class="theme-card" id="theme-mint" onclick="setTheme('mint')" aria-pressed="false"><span class="tp" style="background:#EEF9F4;border-color:rgba(30,110,85,.25);--tl:rgba(30,110,85,.25);--tt:#3DBE98"><span class="tp-tab" style="border-bottom-color:#3DBE98"></span><span class="tp-btns"><i style="background:#A8E6CF"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>ミント</span><span class="theme-sub">やわらかい緑</span></button><button type="button" class="theme-card" id="theme-sky" onclick="setTheme('sky')" aria-pressed="false"><span class="tp" style="background:#EAF5FC;border-color:rgba(40,110,160,.28);--tl:rgba(40,110,160,.28);--tt:#4BA3D8"><span class="tp-tab" style="border-bottom-color:#4BA3D8"></span><span class="tp-btns"><i style="background:#BFE0F5"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>水色</span><span class="theme-sub">さわやかな青</span></button><button type="button" class="theme-card" id="theme-simple" onclick="setTheme('simple')" aria-pressed="false"><span class="tp" style="background:#fff;border-color:rgba(0,0,0,.18);--tl:rgba(0,0,0,.18);--tt:#7fd99a"><span class="tp-tab" style="border-bottom-color:#1a1a1a"></span><span class="tp-btns"><i style="background:#1a1a1a"></i><i></i><i></i></span><span class="tp-grid"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b class="t"></b><b></b><b></b><b></b><b></b></span></span><span class="theme-name"><span class="theme-dot"></span>シンプル</span><span class="theme-sub">白と黒</span></button></div>
         <div style="font-size:11px;color:var(--text2);margin-top:8px">選ぶとすぐに切り替わります</div>
       </div>
       <div class="settings-section">
@@ -690,20 +700,6 @@ input,select,textarea{
   </div>
 </div>
 
-<!-- ══ DIARY VIEW MODAL (日記の全文) ══ -->
-<div class="modal-overlay" id="diary-view-modal">
-  <div class="modal-sheet">
-    <div class="modal-sheet-inner">
-      <div class="modal-title" id="diary-view-date"></div>
-      <div class="diary-full" id="diary-view-text"></div>
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeDiaryView()">閉じる</button>
-        <button class="btn-delete" onclick="deleteDiaryFromView()">削除</button>
-        <button class="btn-save" onclick="editDiaryFromView()">編集</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ DIARY EDIT MODAL ══ -->
 <div class="modal-overlay" id="diary-edit-modal">
@@ -723,7 +719,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.8';
+const VERSION = 'ver.1.8.9';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -1595,9 +1591,6 @@ document.getElementById('event-modal').addEventListener('click', function(e){
 document.getElementById('detail-modal').addEventListener('click', function(e){
   if (e.target === this) closeDetail();
 });
-document.getElementById('diary-view-modal').addEventListener('click', function(e){
-  if (e.target === this) closeDiaryView();
-});
 document.getElementById('today-modal').addEventListener('click', function(e){
   if (e.target === this) closeTodayModal();
 });
@@ -1720,13 +1713,13 @@ function addNearDay() {
 /* テーマ(この端末に保存。未設定はミント) */
 const THEME_KEY = 'md_theme';
 function getTheme() {
-  try { return localStorage.getItem(THEME_KEY) === 'simple' ? 'simple' : 'mint'; } catch(e) { return 'mint'; }
+  try { const v = localStorage.getItem(THEME_KEY); return (v === 'simple' || v === 'sky') ? v : 'mint'; } catch(e) { return 'mint'; }
 }
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = t === 'simple' ? '#ffffff' : '#EEF9F4';
-  ['mint', 'simple'].forEach(k => {
+  if (meta) meta.content = t === 'simple' ? '#ffffff' : t === 'sky' ? '#EAF5FC' : '#EEF9F4';
+  ['mint', 'sky', 'simple'].forEach(k => {
     const b = document.getElementById('theme-' + k);
     if (!b) return;
     b.classList.toggle('sel', k === t);
@@ -1776,7 +1769,7 @@ function importData(input) {
       if (data.taskOptions && typeof data.taskOptions === 'object') Tasks.setOptions(data.taskOptions);
       persist();
       scheduleReminders();
-      diarySeenMonths = null; diaryOpenMonths = new Set();   // 日記の月の開閉をやり直す
+      diarySeenMonths = null; diaryOpenMonths = new Set(); diaryExpanded = new Set();   // 日記の月の開閉・全文の展開をやり直す
       renderCurrentView();
       closeSettings();
       alert('インポートが完了しました');
@@ -1829,6 +1822,7 @@ function renderDiary() {
 
 /* 日記の一覧だけを描き直す(今日の入力欄には触れない=書きかけを消さない) */
 let diaryOpenMonths = new Set();   // 開いている月('YYYY-MM')。最初は最新の月だけ開く(画面を開いている間だけ保持)
+let diaryExpanded = new Set();     // 全文を広げているカード(日付のキー)。画面を開いている間だけ保持
 let diarySeenMonths = null;        // これまでに一覧に出た月。初めて出る月(最初の日記・月が替わった最初の日記など)は自動で開く
 function renderDiaryList() {
   const keys = Object.keys(diaries).sort().reverse();
@@ -1844,7 +1838,7 @@ function renderDiaryList() {
   } else {
     groups.forEach(g => { if (!diarySeenMonths.has(g.ym)) { diarySeenMonths.add(g.ym); diaryOpenMonths.add(g.ym); } });
   }
-  const card = key => `<div class="entry-card" onclick="openDiaryView('${key}')">
+  const card = key => `<div class="entry-card${diaryExpanded.has(key) ? ' expanded' : ''}" onclick="toggleDiaryEntry('${key}', this)">
         <div class="entry-card-top">
           <div class="entry-date">${dayLabel(key)}</div>
           <div class="entry-actions">
@@ -1872,43 +1866,39 @@ function toggleDiaryMonth(ym) {
   renderDiaryList();
 }
 
-/* 3行に入りきらない日記には「全文を読む ›」を付ける(表示中でないと測れないので、表示のたびに呼ぶ) */
+/* 3行に入りきらない日記には、「全文を読む ›」(広げているときは「閉じる」)を付ける
+   表示中でないと測れないので、表示のたびに呼ぶ。広げているカードは、測るあいだだけたたむ */
 function markDiaryOverflow() {
   document.querySelectorAll('#diary-list .entry-more').forEach(e => e.remove());
-  document.querySelectorAll('#diary-list .entry-preview').forEach(el => {
-    if (el.scrollHeight > el.clientHeight + 1) el.insertAdjacentHTML('afterend', '<div class="entry-more">全文を読む ›</div>');
+  document.querySelectorAll('#diary-list .entry-card').forEach(card => {
+    const el = card.querySelector('.entry-preview');
+    const open = card.classList.contains('expanded');
+    if (open) card.classList.remove('expanded');
+    const over = el.scrollHeight > el.clientHeight + 1;
+    if (open) card.classList.add('expanded');
+    if (over) {
+      el.insertAdjacentHTML('afterend', '<div class="entry-more">' + moreLabel(open) + '</div>');
+      card.setAttribute('aria-expanded', String(open));
+    }
   });
+}
+function moreLabel(open) {
+  return open ? '閉じる <i class="ti ti-chevron-up" aria-hidden="true"></i>' : '全文を読む ›';
 }
 window.addEventListener('resize', () => {
   if (document.getElementById('screen-diary').classList.contains('active')) markDiaryOverflow();
 });
 
-/* 日記の全文のポップアップ(予定の詳細と同じ並びのボタン) */
-let diaryViewKey = null;
-function openDiaryView(key) {
-  const e = diaries[key];
-  if (!e) return;
-  diaryViewKey = key;
-  document.getElementById('diary-view-date').textContent = dayLabel(key);
-  document.getElementById('diary-view-text').textContent = e.text || '';
-  lockScroll();
-  document.getElementById('diary-view-modal').classList.add('open');
-}
-function closeDiaryView() {
-  document.getElementById('diary-view-modal').classList.remove('open');
-  unlockScroll();
-  diaryViewKey = null;
-}
-function editDiaryFromView() {
-  const k = diaryViewKey;
-  closeDiaryView();
-  if (k) editDiaryEntry(k);
-}
-function deleteDiaryFromView() {
-  const k = diaryViewKey;
-  if (!k) return;
-  deleteDiaryEntry(k);                   // 確認ダイアログつき。やめた場合は日記が残るので、ポップアップも残す
-  if (!diaries[k]) closeDiaryView();
+/* カードを押すと、その場で下に広がって全文が出る(もう一度押すと3行に戻る)。3行に収まる日記は何も起きない */
+function toggleDiaryEntry(key, card) {
+  const more = card.querySelector('.entry-more');
+  if (!more) return;
+  const open = !card.classList.contains('expanded');
+  card.classList.toggle('expanded', open);
+  card.setAttribute('aria-expanded', String(open));
+  if (open) diaryExpanded.add(key); else diaryExpanded.delete(key);
+  more.innerHTML = moreLabel(open);
+  if (!open) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });   // 閉じて短くなったとき、カードが画面の外に出ないように
 }
 
 let diaryEditKey = null;
@@ -1944,6 +1934,7 @@ function saveDiaryEdit() {
 function deleteDiaryEntry(key) {
   if (!confirm(dayLabel(key) + 'の日記を削除しますか？')) return;
   delete diaries[key];
+  diaryExpanded.delete(key);
   persist();
   if (key === fmt(TODAY)) renderDiary(); else renderDiaryList();
 }
