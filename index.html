@@ -87,7 +87,7 @@ input,select,textarea{
 .header-date{font-size:12px;color:var(--text2)}
 
 /* ── Tab bar ── */
-.tabs{display:flex;border-bottom:0.5px solid var(--border);background:var(--page);position:sticky;top:49px;z-index:20}
+.tabs{display:flex;border-bottom:0.5px solid var(--border);background:var(--page);position:sticky;top:49px;z-index:20;touch-action:pan-y}
 .tab{flex:1;padding:9px 4px 7px;text-align:center;font-size:11px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none}
 .tab i{display:block;font-size:18px;margin-bottom:2px}
 .tab.active{color:var(--tab-on);border-bottom-color:var(--tab-line);font-weight:500}
@@ -721,7 +721,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.10';
+const VERSION = 'ver.1.8.11';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -2791,6 +2791,34 @@ if (document.fonts && document.fonts.ready) {
     if (Math.abs(dy) > Math.abs(dx)) return;
     if (dx < 0) navFwd();
     else navBack();
+  }, { passive: true });
+})();
+
+/* ══════════════════════════
+   TAB BAR SWIPE
+   上のタブの帯(カレンダー・日記・メモ帳・タスク)を左右にスワイプすると、タブを切り替える(全画面共通)
+   左へ=次のタブ、右へ=前のタブ。端では、それ以上は進まない。帯の外のスワイプは、これまでどおり
+══════════════════════════ */
+(function() {
+  const TAB_NAMES = ['calendar', 'diary', 'memo', 'tasks'];
+  const THRESHOLD = 50;
+  const bar = document.querySelector('.tabs');
+  let startX = 0, startY = 0;
+
+  bar.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  bar.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < THRESHOLD) return;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    const cur = TAB_NAMES.findIndex(s => document.getElementById('screen-' + s).classList.contains('active'));
+    const next = cur + (dx < 0 ? 1 : -1);
+    if (cur < 0 || next < 0 || next >= TAB_NAMES.length) return;
+    switchTab(TAB_NAMES[next]);
   }, { passive: true });
 })();
 </script>
