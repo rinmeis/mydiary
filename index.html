@@ -56,11 +56,13 @@ body{
   min-height:-webkit-fill-available;
   display:flex;justify-content:center;
   overscroll-behavior:none;
+  overflow:hidden;                  /* ページ全体はスクロールしない(中身だけがスクロールする) */
   -webkit-text-size-adjust:100%;    /* テキスト自動拡大防止 */
 }
 .app{
   width:100%;max-width:430px;background:var(--page);
-  min-height:100vh;min-height:-webkit-fill-available;
+  height:100vh;height:-webkit-fill-available;height:100dvh;   /* 画面の高さに固定(ページ全体は動かさない) */
+  overflow:hidden;
   display:flex;flex-direction:column;
   padding-bottom: var(--safe-bottom); /* ホームバー対応 */
 }
@@ -91,7 +93,7 @@ input,select,textarea{
 .tab.active{color:var(--tab-on);border-bottom-color:var(--tab-line);font-weight:500}
 
 /* ── Screens ── */
-.screen{display:none;flex:1;flex-direction:column}
+.screen{display:none;flex:1;flex-direction:column;min-height:0}
 .screen.active{display:flex}
 
 /* ══ CALENDAR ══ */
@@ -719,7 +721,7 @@ input,select,textarea{
 /* ══════════════════════════
    DATA
 ══════════════════════════ */
-const VERSION = 'ver.1.8.9';
+const VERSION = 'ver.1.8.10';
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
@@ -960,7 +962,7 @@ function jumpToToday() {
     const gridId = currentView === 'week' ? 'time-grid-week' : 'time-grid-day';
     setTimeout(() => {
       const grid = document.getElementById(gridId);
-      if (grid) grid.scrollTop = Math.max(0, nowH * CELL_H - 80);
+      if (grid) { if (currentView === 'day') scrollDayToHour(nowH); else grid.scrollTop = Math.max(0, nowH * CELL_H - 80); }
     }, 80);
   }
 }
@@ -1206,6 +1208,14 @@ function renderWeek() {
 /* ══════════════════════════
    DAILY VIEW
 ══════════════════════════ */
+/* 日表示: 指定した時間の行が、時間の枠の上から少し下に来るようにスクロールする */
+function scrollDayToHour(hour) {
+  const grid = document.getElementById('time-grid-day');
+  const slot = document.getElementById('dslot-' + hour);
+  if (!grid || !slot) return;
+  const row = slot.parentElement;
+  grid.scrollTop = Math.max(0, row.getBoundingClientRect().top - grid.getBoundingClientRect().top + grid.scrollTop - 80);
+}
 function renderDay() {
   const dStr = fmt(calCursor);
   taskDue = Tasks.pendingByDate();
@@ -1310,10 +1320,7 @@ function renderDay() {
       line.innerHTML = `<div class="day-now-dot"></div><div class="day-now-bar"></div><div class="day-now-time">${timeLabel}</div>`;
       slot.appendChild(line);
     }
-    setTimeout(() => {
-      const grid = document.getElementById('time-grid-day');
-      grid.scrollTop = Math.max(0, nowH * CELL_H - 80);
-    }, 50);
+    setTimeout(() => scrollDayToHour(nowH), 50);
   }
 }
 
@@ -2058,7 +2065,7 @@ function delMemo(i) {
    TASKS (タスク管理 / tasks_ver.1.8.4.js を組み込み)
 ══════════════════════════ */
 /* ============================================================
-   tasks_ver.1.8.8.js  ― mydiary タスク管理機能(第4のタブ)
+   tasks_ver.1.8.10.js  ― mydiary タスク管理機能(第4のタブ)
    単体で動作する独立モジュール。mydiary本体にはまだ組み込まれていない。
 
    使い方:
@@ -2517,7 +2524,7 @@ const Tasks = (() => {
 .tk-root.tk-view-done .tk-done{display:flex}
 .tk-root.tk-view-nodue .tk-nodue{display:flex}
 .tk-root.tk-view-done .tk-fab{display:none}
-.tk-toolbar{display:flex;justify-content:flex-end;gap:6px;padding:10px 16px 0}
+.tk-toolbar{display:flex;justify-content:flex-end;gap:6px;padding:10px 16px 8px;position:sticky;top:0;z-index:4;background:var(--page,#fff)}
 .tk-tbtn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-family:inherit;color:var(--text,#1a1a1a);border:.5px solid var(--border2,rgba(0,0,0,.18));border-radius:16px;padding:5px 10px;background:var(--tbtn-bg,#f6f6f2);cursor:pointer}
 .tk-tbtn i{font-size:14px}
 .tk-tbtn.hl{border-color:var(--accent,#1a1a1a)}
